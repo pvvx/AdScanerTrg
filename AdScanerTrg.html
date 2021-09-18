@@ -380,7 +380,7 @@ const logDataView = (labelOfDataSource, key, b) => {
 			let cnt = b.getUint8(13);
 			let flg = b.getUint8(14);
 			let s = 'MAC: '+hex(buf[5],2)+hex(buf[4],2)+hex(buf[3],2)+hex(buf[2],2)+hex(buf[1],2)+hex(buf[0],2);
-			s += ', Bat: '+bat+'%, Vbat: '+vbat+' mV , Temp: '+temp+'°C, Humi: '+humi+'%, Count: '+cnt+', Flg: '+flg;
+			s += ', Bat: '+bat+'%, Vbat: '+vbat+' mV , Temp: '+temp+'°C, Humi: '+humi+'%, Count: '+cnt+', Flg: 0x'+hex(flg,2)+' rds('+(flg&1)+')/trg('+((flg>>1)&1)+')';
 			log(s); }
 		else if(b.byteLength == 13) { // atc1441
 			// A4 C1 38 56 58 70 01 0A 18 48 0B 25 70

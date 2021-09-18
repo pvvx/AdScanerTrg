@@ -1,4 +1,6 @@
-AdScanerTrg JDY-10 module (TLSR8266)
+AdScanerTrg - Trigger and reed switch status receiver on TLSR826x.
+
+Used JDY-10 module (TLSR8266).
 
 Firmware files:
 
@@ -20,13 +22,15 @@ TelinkOTA - https://pvvx.github.io/UBIA/TelinkOTA.html
 
 Install the Advertising type: "custom" on the custom firmware 
 (https://github.com/pvvx/ATC_MiThermometer),
-configure the TRG settings: Control GPIO PA5 (marked "reset").
+configure the TRG settings: Control GPIO PA5 (marked "reset"),
+and Reed Switch (GPIO PA6 - label on the "P8" pin for LYWSD03MMC).
 
-Run AdScanerTrg.html and configure the MAC of the sensor device 
-to repeat the "Temperature or Humidity Trigger" on the GPIO:
+Run [AdScanerTrg.html](https://pvvx.github.io/AdScanerTrg/AdScanerTrg.html) 
+and configure the MAC of the sensor device to repeat 
+the "Temperature or Humidity Trigger" on the GPIO:
 
-PC0 - the output value of the GPIO_TRG pin (pull up / down)
-PE6 - input value of the GPIO_TRG pin (real level)
+PC0 - the output value of the GPIO_TRG pin (Temp/Hum trigger)
+PE6 - input value of the GPIO_RDS pin (Reed Switch)
 
 If sensor data is not received within 120 seconds, then PC0 and PE6 are set to "0".
 
