@@ -1,4 +1,6 @@
-AdScanerTrg - Trigger and reed switch status receiver on TLSR826x.
+AdScanerTrg - Trigger and reed switch status receiver on TLSR826x + BLE ADV repeater.
+
+In connection mode, it has the ability to work as a repeater - scanner BLE advertising from other devices.
 
 Used JDY-10 module (TLSR8266).
 
