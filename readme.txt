@@ -36,6 +36,10 @@ PE6 - input value of the GPIO_RDS pin (Reed Switch)
 
 If sensor data is not received within 120 seconds, then PC0 and PE6 are set to "0".
 
+* Implementation on E104-BT05-TB and ESP01Relay:
+
+![Implementation on E104-BT05-TB and ESP01Relay](https://raw.githubusercontent.com/pvvx/pvvx.github.io/master/AdScanerTrg/img/AdScanerTrg-E104-BT05.gif)
+
 
 
 
