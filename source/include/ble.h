@@ -34,9 +34,17 @@
 
 #if (SPP_SERVICE_ENABLE)
 #define SERVICE_UUID_SPP 		0xffe0
-#ifndef SPP_SERVICE_BUF_LEN
-#define SPP_SERVICE_BUF_LEN		MTU_DATA_SIZE
+#define CHARACTERISTIC_UUID_SPP (SERVICE_UUID_SPP+1)
+#define SPP_SERVICE_BUF_LEN		20 // MTU_DATA_SIZE
+extern	u16 SppDataCCC;
+extern	u8 SppDataBuffer[SPP_SERVICE_BUF_LEN];
 #endif
+
+#if (ADV_SERVICE_ENABLE)
+#define SERVICE_UUID_ADV 		0x1f10
+#define CHARACTERISTIC_UUID_ADV (SERVICE_UUID_ADV+1)
+extern u16 advNotifyCCC;
+extern u32 advDataValue;
 #endif
 
 typedef struct
@@ -86,11 +94,18 @@ typedef enum
 	BATT_LEVEL_INPUT_DP_H,					//UUID: 2A19 	VALUE: batVal
 	BATT_LEVEL_INPUT_CCB_H,					//UUID: 2902, 	VALUE: batValCCC
 #endif
+#if (ADV_SERVICE_ENABLE)
+	//// ADV ////
+	/**********************************************************************************************/
+	ADV_PS_H, 								//UUID: 2800, 	VALUE: telink ota service uuid
+	ADV_CD_H,								//UUID: 2803, 	VALUE:  			Prop: Read | Notify
+	ADV_DP_H,								//UUID: adv uuid,  VALUE: Data
+	ADV_CCB_H,								//UUID: 2902, 	VALUE: advValCCC
+#endif
 #if (SPP_SERVICE_ENABLE)
 	//// TELIK_SPP ////
 	/**********************************************************************************************/
 	SPP_PS_H, 								//UUID: 2800, 	VALUE: telink
-
 	//Server2Client
 	SPP_Server2Client_INPUT_CD_H,			//UUID: 2803, 	VALUE:  			Prop: Read | Notify
 	SPP_Server2Client_INPUT_DP_H,			//UUID: SPP_Server2Client uuid,  VALUE: SppDataServer2ClientData
@@ -116,10 +131,5 @@ static inline u32 clock_tik_exceed(u32 ref, u32 span_us){
 extern u8 tbl_mac[6];
 extern const attribute_t my_Attributes[];
 void ble_init(void);
-
-#if SPP_SERVICE_ENABLE
-extern	u16 SppDataCCC;
-extern	u8 SppDataBuffer[SPP_SERVICE_BUF_LEN];
-#endif
 
 #endif /* BLE_H_ */

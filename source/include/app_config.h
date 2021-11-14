@@ -30,6 +30,7 @@ extern "C" {
 ////////// BLE product  Information  ////////////
 #define DEV_NAME		"ADSCANER" // max name = 16 char!
 #define DEV_NAME_SIZE 	8
+#define DEV_VERSION 	0x1001
 
 ////////// USB product  Information  ////////////
 #define STRING_VENDOR        L"Telink"
@@ -40,6 +41,7 @@ extern "C" {
 /////////////////// BLE Service ////////////////////////////
 #define BATT_SERVICE_ENABLE		0
 #define SPP_SERVICE_ENABLE		1
+#define ADV_SERVICE_ENABLE		1
 #define OTA_SERVICE_ENABLE		1	// Для работы необходимо записать usbfloader.bin в 0x73000
 
 /////////////////// WatchDog  //////////////////////////////
@@ -57,12 +59,57 @@ extern "C" {
 
 #if	(BOARD == BOARD_JDY_10)
 #include "board_jdy_10.h"
+// выход, управляемый внешним термометром
+#define GPIO_OUT_TH					GPIO_PC0
+//#define PC0_FUNC                	AS_GPIO
+#define PC0_INPUT_ENABLE        	1
+#define PC0_OUTPUT_ENABLE       	1
+//#define PC0_DATA_OUT				0
+//#define PC0_DATA_STRENGTH       	1
+// выход, управляемый внешним герконом
+#define GPIO_OUT_RDS				GPIO_PE6
+#define PE6_INPUT_ENABLE        	1
+#define PE6_OUTPUT_ENABLE       	1
+// выход, управляемый внешним датчиком света и движения
+#define GPIO_OUT_LM					GPIO_PF0
+#define PF0_INPUT_ENABLE        	1
+#define PF0_OUTPUT_ENABLE       	1
 #define CRYSTAL_TYPE			XTAL_12M		//  extern 12M crystal
 #elif (BOARD == BOARD_E104_BT05)
 #include "board_e104_bt05.h"
+// выход, управляемый внешним термометром
+#define GPIO_OUT_TH					GPIO_PA1 // PWM1
+//#define PC0_FUNC                	AS_GPIO
+#define PA1_INPUT_ENABLE        	1
+#define PA1_OUTPUT_ENABLE       	1
+//#define PC0_DATA_OUT				0
+//#define PC0_DATA_STRENGTH       	1
+// выход, управляемый внешним герконом
+#define GPIO_OUT_RDS				GPIO_PE4 // LINK
+#define PE4_INPUT_ENABLE        	1
+#define PE4_OUTPUT_ENABLE       	1
+// выход, управляемый внешним датчиком света и движения
+#define GPIO_OUT_LM					GPIO_PA5 // PWM2
+#define PA5_INPUT_ENABLE        	1
+#define PA5_OUTPUT_ENABLE       	1
 #define CRYSTAL_TYPE			XTAL_16M		//  extern 16M crystal
 #elif (BOARD == BOARD_E104_BT10)
 #include "board_e104_bt10.h"
+// выход, управляемый внешним термометром
+#define GPIO_OUT_TH					GPIO_PC0
+//#define PC0_FUNC                	AS_GPIO
+#define PC0_INPUT_ENABLE        	1
+#define PC0_OUTPUT_ENABLE       	1
+//#define PC0_DATA_OUT				0
+//#define PC0_DATA_STRENGTH       	1
+// выход, управляемый внешним герконом
+#define GPIO_OUT_RDS				GPIO_PE6
+#define PE6_INPUT_ENABLE        	1
+#define PE6_OUTPUT_ENABLE       	1
+// выход, управляемый внешним датчиком света и движения
+#define GPIO_OUT_LM					GPIO_PE4
+#define PE4_INPUT_ENABLE        	1
+#define PE4_OUTPUT_ENABLE       	1
 #define CRYSTAL_TYPE			XTAL_16M		//  extern 16M crystal
 #else
 #undef BOARD
@@ -72,16 +119,6 @@ extern "C" {
 #define CRYSTAL_TYPE			XTAL_12M		//  extern 12M crystal
 #endif
 
-// выход, управляемый внешним термометром
-#define GPIO_OUT1 					GPIO_PC0
-//#define PC0_FUNC                	AS_GPIO
-#define PC0_INPUT_ENABLE        	1
-#define PC0_OUTPUT_ENABLE       	1
-//#define PC0_DATA_OUT				0
-//#define PC0_DATA_STRENGTH       	1
-#define GPIO_OUT2 					GPIO_PE6
-#define PE6_INPUT_ENABLE        	1
-#define PE6_OUTPUT_ENABLE       	1
 
 
 /////////////////// set default   ////////////////

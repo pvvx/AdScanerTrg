@@ -1,12 +1,12 @@
-AdScanerTrg - Trigger and reed switch status receiver on TLSR826x + BLE ADV repeater.
+AdScanerTrg - Trigger and reed switch status receiver on TLSR8266 + BLE ADV repeater.
 
 In connection mode, it has the ability to work as a repeater - scanner BLE advertising from other devices.
 
-Used JDY-10 module (TLSR8266).
+Used JDY-10 or E104-BT05 module (TLSR8266).
 
 Firmware files:
 
-1. 8266_jdy_10.bin - the main project file.
+1. 8266_jdy_10.bin, 8266_e104_bt05.bin - the main project file.
 2. floader.bin - file of project TlsrComProg-Uartfloader. 
    Used to download firmware via UART. It is activated if, 
    at module startup, the SWS pin is shorted to GND.
@@ -24,17 +24,23 @@ TelinkOTA - https://pvvx.github.io/UBIA/TelinkOTA.html
 
 Install the Advertising type: "custom" on the custom firmware 
 (https://github.com/pvvx/ATC_MiThermometer),
-configure the TRG settings: Control GPIO PA5 (marked "reset"),
-and Reed Switch (GPIO PA6 - label on the "P8" pin for LYWSD03MMC).
+Reed Switch (GPIO PA6 - label on the "P8" pin for LYWSD03MMC).
 
 Run [AdScanerTrg.html](https://pvvx.github.io/AdScanerTrg/AdScanerTrg.html) 
-and configure the MAC of the sensor device to repeat 
-the "Temperature or Humidity Trigger" on the GPIO:
+and configure the MAC of the sensors devices
 
-PC0 - the output value of the GPIO_TRG pin (Temp/Hum trigger)
-PE6 - input value of the GPIO_RDS pin (Reed Switch)
+JDY-10 pins:
+PC0 - GPIO_TH: output controlled by an external temperature and humidity sensor (LYWSD03MMC, CGG1-M, MHO-C401, LYWSD02, ...)
+PE6 - GPIO_RS: output controlled by external reed switch (LYWSD03MMC with Reed Switch)
+PF0 - GPIO_LM: output controlled by an external motion and light sensor (CGPR1 in Qingping Mode)
 
-If sensor data is not received within 120 seconds, then PC0 and PE6 are set to "0".
+E104-BT05 pins:
+PA1 - GPIO_TH: output controlled by an external temperature and humidity sensor (LYWSD03MMC, CGG1-M, MHO-C401, LYWSD02, ...)
+PE4 - GPIO_RS: output controlled by external reed switch (LYWSD03MMC with Reed Switch)
+PA5 - GPIO_LM: output controlled by an external motion and light sensor (CGPR1 in Qingping Mode)
+
+
+If sensor data is not received within 120 seconds, then GPIO_xx are set to "0".
 
 * Implementation on E104-BT05-TB and ESP01Relay:
 
