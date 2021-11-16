@@ -117,7 +117,7 @@ struct __attribute__((packed)) {
 } adv_buf = {
 		.len1 = 0x02,
 		.id1 = GAP_ADTYPE_FLAGS,
-		.len1 = 0x06,
+		.data1 = 0x06,
 		.len = sizeof(wrk) + 3,
 		.id = GAP_ADTYPE_SERVICE_DATA_UUID_16BIT,
 		.uuid = 0x1f11
