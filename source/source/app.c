@@ -120,14 +120,14 @@ struct __attribute__((packed)) {
 		.data1 = 0x06,
 		.len = sizeof(wrk) + 3,
 		.id = GAP_ADTYPE_SERVICE_DATA_UUID_16BIT,
-		.uuid = 0x1f11
+		.uuid = CHARACTERISTIC_UUID_ADV
 		};
 
 
 uint8_t		dev1_MAC[6]; // [0] - lo, .. [6] - hi digits
 uint8_t		dev2_MAC[6]; // [0] - lo, .. [6] - hi digits
 
-
+u32 utc_time_sec, utc_time_sec_tick;
 u32 off_tisk_th;
 u32 off_tisk_lm;
 
@@ -185,7 +185,7 @@ __attribute__((optimize("-Os"))) void set_th_out(void) {
 	if(dev_cfg.temp_hysteresis || dev_cfg.humi_hysteresis) {
 		wrk.flg.trg_output = (wrk.flg.humi_event || wrk.flg.temp_event);
 	}
-	off_tisk_th = clock_time();
+	off_tisk_th = utc_time_sec;
 	gpio_write(GPIO_OUT_TH, wrk.flg.trg_output);
 }
 
@@ -237,7 +237,7 @@ __attribute__((optimize("-Os"))) void set_lm_out(int motion_event) {
 			else
 				wrk.flg.lm_output = wrk.flg.light_event;
 	}
-	off_tisk_lm = clock_time();
+	off_tisk_lm = utc_time_sec;
 	gpio_write(GPIO_OUT_LM, wrk.flg.lm_output);
 }
 __attribute__((optimize("-Os"))) void filter_xiaomi_ad(padv_xiaomi_t p) {
@@ -336,6 +336,7 @@ __attribute__((optimize("-Os"))) void filter_custom_ad(adv_custom_t *p) {
 		//new_trg = p->flags.trg_output;
 		//new_rds = p->flags.rds_input;
 		//gpio_write(GPIO_OUT_TH, p->flags.trg_output);
+		wrk.flg.rds_output = p->flags.rds_input;
 		gpio_write(GPIO_OUT_RDS, p->flags.rds_input);
 	}
 }
@@ -413,21 +414,23 @@ void user_init() {
 	}
 }
 
-uint32_t utc_time_sec, utc_time_sec_tick;
-
 void main_loop() {
 	u32 tt = clock_time();
-	if (tt - off_tisk_th >= 120 * CLOCK_SYS_CLOCK_1S) {
-		gpio_write(GPIO_OUT_TH, 0);
-		off_tisk_th = tt;
-	}
-	if (tt - off_tisk_lm >= 120 * CLOCK_SYS_CLOCK_1S) {
-		gpio_write(GPIO_OUT_LM, 0);
-		off_tisk_lm = tt;
-	}
 	while(tt -  utc_time_sec_tick > CLOCK_SYS_CLOCK_1S) {
 		utc_time_sec_tick += CLOCK_SYS_CLOCK_1S;
 		utc_time_sec++; // + 1 sec
+		if (utc_time_sec - off_tisk_th >= 60) {
+			gpio_write(GPIO_OUT_TH, 0);
+			gpio_write(GPIO_OUT_RDS, 0);
+			wrk.flg.rds_output = 0;
+			wrk.flg.trg_output = 0;
+			off_tisk_th = utc_time_sec;
+		}
+		if (utc_time_sec - off_tisk_lm >= 60) {
+			gpio_write(GPIO_OUT_LM, 0);
+			wrk.flg.lm_output = 0;
+			off_tisk_lm = utc_time_sec;
+		}
 		if(wrk.motion_timer)
 			wrk.motion_timer--;
 		if(memcmp(&adv_buf.wrk, &wrk, sizeof(wrk))) {

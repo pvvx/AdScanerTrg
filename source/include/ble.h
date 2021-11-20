@@ -101,12 +101,12 @@ typedef enum
 	ADV_CD_H,								//UUID: 2803, 	VALUE:  			Prop: Read | Notify
 	ADV_DP_H,								//UUID: adv uuid,  VALUE: Data
 	ADV_CCB_H,								//UUID: 2902, 	VALUE: advValCCC
+	ADV_DESC_H,								//UUID: 2901, 	VALUE: advDescriptor
 #endif
 #if (SPP_SERVICE_ENABLE)
 	//// TELIK_SPP ////
 	/**********************************************************************************************/
 	SPP_PS_H, 								//UUID: 2800, 	VALUE: telink
-	//Server2Client
 	SPP_Server2Client_INPUT_CD_H,			//UUID: 2803, 	VALUE:  			Prop: Read | Notify
 	SPP_Server2Client_INPUT_DP_H,			//UUID: SPP_Server2Client uuid,  VALUE: SppDataServer2ClientData
 	SPP_Server2Client_INPUT_CCB_H,			//UUID: 2902 	VALUE: SppDataServer2ClientDataCCC

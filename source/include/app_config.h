@@ -30,7 +30,7 @@ extern "C" {
 ////////// BLE product  Information  ////////////
 #define DEV_NAME		"ADSCANER" // max name = 16 char!
 #define DEV_NAME_SIZE 	8
-#define DEV_VERSION 	0x1001
+#define DEV_VERSION 	0x1002
 
 ////////// USB product  Information  ////////////
 #define STRING_VENDOR        L"Telink"

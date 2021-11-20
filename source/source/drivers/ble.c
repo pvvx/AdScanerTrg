@@ -46,7 +46,7 @@ const u16 userdesc_UUID		= GATT_UUID_CHAR_USER_DESC;
 
 /////////////////////////////////////////ADV/////////////////////////////////////
 #if (ADV_SERVICE_ENABLE)
-const u8 advDescriptor[] = "ADV";
+const u8 advDescriptor[] = {'A','D','V'};
 //// ADV attribute values
 static const u8 my_advCharVal[5] = {
 	CHAR_PROP_READ | CHAR_PROP_NOTIFY,
@@ -64,7 +64,7 @@ u32 advDataValue;
 #if (SPP_SERVICE_ENABLE)
 //SPP data descriptor
 #define SPP_UUID_LEN	2 // 2 or 16
-const u8 SppS2cDescriptor[] = "SPP";
+const u8 SppS2cDescriptor[] = {'S','P','P'};
 #if SPP_UUID_LEN == 16
 #define SPP_UUID_SERVICE			0xfb,0x34,0x9b,0x5f,0x80,0x00, 0x00,0x80, 0x00,0x10, 0x00,0x00, SERVICE_UUID_SPP&0xFF,SERVICE_UUID_SPP>>8,0x00,0x00
 #define SPP_DATA_SERVER2CLIENT		0xfb,0x34,0x9b,0x5f,0x80,0x00, 0x00,0x80, 0x00,0x10, 0x00,0x00, CHARACTERISTIC_UUID_SPP&0xFF,CHARACTERISTIC_UUID_SPP>>8,0x00,0x00
@@ -187,7 +187,7 @@ static const u16 serviceChangeUIID = GATT_UUID_SERVICE_CHANGE;
 u16 serviceChangeVal[2] = {0};
 static u8 serviceChangeCCC[2]={0,0};
 static u8 my_PnPCharacter = CHAR_PROP_READ;
-const u8 my_PnPtrs[] = {0x02, 0x8a, 0x24, 0x66, 0x82, 0x01, 0x00};
+const u8 my_PnPtrs[] = {0x02, 0x8a, 0x24, 0x66, 0x82, DEV_VERSION&0xff, 0x00};
 
 /////////////////////////////////////////////////////////
 
@@ -223,10 +223,11 @@ const attribute_t my_Attributes[] = {
 #endif
 #if (ADV_SERVICE_ENABLE)
 	////////////////////////////////////// Adv Service /////////////////////////////////////////////////////
-	{4,ATT_PERMISSIONS_READ,2,sizeof(my_advServiceUUID),(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_advServiceUUID), 0},
+	{5,ATT_PERMISSIONS_READ,2,sizeof(my_advServiceUUID),(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_advServiceUUID), 0},
 	{0,ATT_PERMISSIONS_READ,2,sizeof(my_advCharVal),(u8*)(&my_characterUUID), (u8*)(my_advCharVal), 0},				//prop
 	{0,ATT_PERMISSIONS_READ,2,sizeof(advDataValue),(u8*)(&my_advCharUUID), (u8*)(&advDataValue), 0},	//value
 	{0,ATT_PERMISSIONS_RDWR,2,sizeof(advNotifyCCC),(u8*)(&clientCharacterCfgUUID), (u8*)(&advNotifyCCC), 0},	//value
+	{0,ATT_PERMISSIONS_READ, 2,sizeof(advDescriptor),(u8*)&userdesc_UUID,(u8*)(&advDescriptor)},
 #endif
 #if (SPP_SERVICE_ENABLE)
 	////////////////////////////////////// SPP Service /////////////////////////////////////////////////////
