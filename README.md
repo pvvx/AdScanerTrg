@@ -20,6 +20,7 @@ Reed Switch (GPIO PA6 - label on the "P8" pin for LYWSD03MMC).
 Run [AdScanerTrg.html](https://pvvx.github.io/AdScanerTrg/AdScanerTrg.html) 
 and configure the MAC of the sensors devices
 
+![AdScanerTrgHtml.gif]((https://raw.githubusercontent.com/pvvx/pvvx.github.io/master/AdScanerTrg/img/AdScanerTrgHtml.gif)
 
 If sensor data is not received within 60 seconds, then GPIO_xx are set to "0".
 
