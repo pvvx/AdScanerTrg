@@ -26,7 +26,7 @@ const dev_cfg_t def_dev_cfg = {
 		.light_threshold = 200,
 		.light_hysteresis = -50,
 		.motion_timer = 15,
-		.flg.motion_low_level = 0
+		.flg.reserved = 0
 };
 RAM uint16_t battery_mv;    // 2200..3300 mV
 RAM volatile uint8_t send_measure; // measure complete

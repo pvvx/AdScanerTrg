@@ -24,7 +24,7 @@ typedef struct __attribute__((packed)) _dev_cfg_t {
 	int16_t		light_hysteresis;
 	uint16_t	motion_timer;
 	struct {
-		uint8_t 	motion_low_level:	1; // Low-level motion enable switch
+		uint8_t 	reserved:	1;
 	} flg;
 } dev_cfg_t, * pdev_cfg_t;
 

@@ -200,24 +200,21 @@ void set_lm_out(int motion_event) {
 	} else wrk.flg.light_event = false;
 
 	if(wrk.motion_timer) { // свет включен по событию движения
-		if(motion_event && dev_cfg.motion_timer) { // обнаружено движение и включен опрос движения
+		if(motion_event && dev_cfg.motion_timer && wrk.motion_level) { // обнаружено движение и включен опрос движения
 			wrk.flg.lm_output = true;	// включить LM
 			wrk.motion_timer = dev_cfg.motion_timer; // обновить таймер
 		} // не менять состояние выхода LM
 	} else { // свет ещё не включен по событию движения
-		if(motion_event && dev_cfg.motion_timer) { // обнаружено движение и включен опрос движения
+		if(motion_event && dev_cfg.motion_timer && wrk.motion_level) { // обнаружено движение и включен опрос движения
 			// #TODO wrk.motion == 0 -> не стартовать включение?
 			if(wrk.flg.light_event // темно?
 				|| dev_cfg.light_hysteresis == 0) {  // или не задано слежение за освещением?
-				if(dev_cfg.flg.motion_low_level || wrk.motion_level) {
 					wrk.flg.lm_output = true;	// включить LM
 					wrk.motion_timer = dev_cfg.motion_timer; // установить таймер
-				} else
-					wrk.flg.lm_output = false;	// не включать LM
 			} else
-				wrk.flg.lm_output = false;	// не включать LM
+					wrk.flg.lm_output = false;	// не включать LM
 		} else // работа только по освещению
-			if(dev_cfg.motion_timer)
+			if(dev_cfg.motion_timer) // включен опрос движения
 				wrk.flg.lm_output = false;	// не включать LM
 			else
 				wrk.flg.lm_output = wrk.flg.light_event;
