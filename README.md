@@ -1,6 +1,6 @@
 AdScanerTrg - relay control from external BLE sensors for temperature, humidity, lighting, motion, reed switch. A repeater of BLE advertising packages.
 
-Used SoC [TLSR8266](https://github.com/pvvx/AdScanerTrg/TLSR8266) or [TLSR825x](https://github.com/pvvx/AdScanerTrg/TLSR825x) (module: JDY-10, E104-BT05, TB-03F, TB-04, ...)
+Used SoC TLSR8266 or TLSR825x (module: JDY-10, E104-BT05, TB-03F, TB-04, ...)
 
 ### Controls three relay outputs:
 1. Switching on at a given temperature and / or humidity with hysteresis.
@@ -17,12 +17,17 @@ Install the Advertising type: "custom" on the custom firmware
 (https://github.com/pvvx/ATC_MiThermometer),
 Reed Switch (GPIO PA6 - label on the "P8" pin for LYWSD03MMC).
 
-Run [AdScanerTrg.html](https://pvvx.github.io/AdScanerTrg/AdScanerTrg.html) 
+TLSR8266 Run [AdScanerTrg.html](https://pvvx.github.io/AdScanerTrg/AdScanerTrg.html) 
 and configure the MAC of the sensors devices
 
 ![AdScanerTrgHtml.gif](https://raw.githubusercontent.com/pvvx/pvvx.github.io/master/AdScanerTrg/img/AdScanerTrgHtml.gif)
 
 If sensor data is not received within 60 seconds, then GPIO_xx are set to "0".
+
+
+TLSR825x Run [AdScanerTrg2.html](https://pvvx.github.io/AdScanerTrg/AdScanerTrg2.html) 
+and configure the MAC, bindkey of the sensors devices
+
 
 * Implementation on E104-BT05-TB and ESP01Relay:
 

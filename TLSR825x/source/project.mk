@@ -11,6 +11,7 @@ $(OUT_PATH)/source/flash_eep.o \
 $(OUT_PATH)/source/scaning.o \
 $(OUT_PATH)/source/blt_common.o \
 $(OUT_PATH)/source/ble.o \
+$(OUT_PATH)/source/aes_ccm.o \
 $(OUT_PATH)/source/main.o
 
 

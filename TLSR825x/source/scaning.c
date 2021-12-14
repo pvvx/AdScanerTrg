@@ -49,13 +49,85 @@ typedef struct __attribute__((packed)) _adv_custom_t {
 	trigger_flg_t	flags;
 } adv_custom_t, * padv_custom_t;
 
-// GATT Service 0xfe95 Xiaomi Inc.
+// Service 0xfe95 Xiaomi Inc.
+
+//	https://iot.mi.com/new/doc/embedded-development/ble/object-definition
+enum { // mijia ble version 5, General events
+	MI_DATA_EV_Base					=0x0000,
+	MI_DATA_EV_Connect				=0x0001,
+	MI_DATA_EV_SimplrPair			=0x0002,
+	MI_DATA_EV_Motion				=0x0003,
+	MI_DATA_EV_KeepAway				=0x0004,
+	MI_DATA_EV_LockObsolete			=0x0005,
+	MI_DATA_EV_FingerPrint			=0x0006,
+	MI_DATA_EV_Door					=0x0007,
+	MI_DATA_EV_Armed				=0x0008,
+	MI_DATA_EV_GestureController	=0x0009,
+	MI_DATA_EV_BodyTemp				=0x000a,
+	MI_DATA_EV_Lock					=0x000b,
+	MI_DATA_EV_Flooding				=0x000c,
+	MI_DATA_EV_Smoke				=0x000d,
+	MI_DATA_EV_Gas					=0x000e,
+	MI_DATA_EV_MovingWithLight		=0x000f, // Someone is moving (with light)
+	MI_DATA_EV_ToothbrushIncident	=0x0010,
+	MI_DATA_EV_CatEyeIncident		=0x0011,
+	MI_DATA_EV_WeighingEvent		=0x0012,
+	MI_DATA_EV_Button				=0x1001
+} MI_DATA_EV;
+
+enum { // mijia ble version 5
+	MI_DATA_ID_Sleep				=0x1002,
+	MI_DATA_ID_RSSI					=0x1003,
+	MI_DATA_ID_Temperature			=0x1004,
+	MI_DATA_ID_Humidity				=0x1006,
+	MI_DATA_ID_LightIlluminance		=0x1007,
+	MI_DATA_ID_SoilMoisture			=0x1008,
+	MI_DATA_ID_SoilECvalue			=0x1009,
+	MI_DATA_ID_Power				=0x100A,
+	MI_DATA_ID_TempAndHumidity		=0x100D,
+	MI_DATA_ID_Lock					=0x100E,
+	MI_DATA_ID_Gate					=0x100F,
+	MI_DATA_ID_Formaldehyde			=0x1010,
+	MI_DATA_ID_Bind					=0x1011,
+	MI_DATA_ID_Switch				=0x1012,
+	MI_DATA_ID_RemAmCons			=0x1013, // Remaining amount of consumables
+	MI_DATA_ID_Flooding				=0x1014,
+	MI_DATA_ID_Smoke				=0x1015,
+	MI_DATA_ID_Gas					=0x1016,
+	MI_DATA_ID_NoOneMoves			=0x1017,
+	MI_DATA_ID_LightIntensity		=0x1018,
+	MI_DATA_ID_DoorSensor			=0x1019,
+	MI_DATA_ID_WeightAttributes		=0x101A,
+	MI_DATA_ID_NoOneMovesOverTime 	=0x101B, // No one moves over time
+	MI_DATA_ID_SmartPillow			=0x101C
+} MI_DATA_ID;
+
 // All data little-endian
 typedef struct __attribute__((packed)) _adv_xiaomi_t {
 	uint8_t		size;	// = ?
 	uint8_t		uid;	// = 0x16, 16-bit UUID
 	uint16_t	UUID;	// = 0xfe95, GATT Service
-	uint16_t    ctrID;
+#if 0
+	union { // Frame Control
+		struct __attribute__((packed)) {
+			uint16_t Factory: 		1; // reserved text
+			uint16_t Connected: 	1; // reserved text
+			uint16_t Central: 		1; // Keep
+			uint16_t isEncrypted: 	1; // 0: The package is not encrypted; 1: The package is encrypted
+			uint16_t MACInclude: 	1; // 0: Does not include the MAC address; 1: includes a fixed MAC address (the MAC address is included for iOS to recognize this device and connect)
+			uint16_t CapabilityInclude: 	1; // 0: does not include Capability; 1: includes Capability. Before the device is bound, this bit is forced to 1
+			uint16_t ObjectInclude:	1; // 0: does not contain Object; 1: contains Object
+			uint16_t Mesh: 			1; // 0: does not include Mesh; 1: includes Mesh. For standard BLE access products and high security level access, this item is mandatory to 0. This item is mandatory for Mesh access to 1.
+			uint16_t registered:	1; // 0: The device is not bound; 1: The device is registered and bound.
+			uint16_t solicited:		1; // 0: No operation; 1: Request APP to register and bind. It is only valid when the user confirms the pairing by selecting the device on the developer platform, otherwise set to 0. The original name of this item was bindingCfm, and it was renamed to solicited "actively request, solicit" APP for registration and binding
+			uint16_t AuthMode:		2; // 0: old version certification; 1: safety certification; 2: standard certification; 3: reserved
+			uint16_t version:		4; // Version number (currently v5)
+		} b; // bits
+		uint16_t	word;	// Frame Control
+	} ctrID; // Frame Control
+#else
+	uint16_t	ctrID;	// Frame Control
+#endif
 	uint16_t    devID;
 	uint8_t		counter;
 	uint8_t		MAC[6]; // [0] - lo, .. [6] - hi digits
@@ -111,6 +183,68 @@ typedef struct __attribute__((packed)) _adv_struct_qingping_t {
 
 RAM u32 off_tisk_th;
 RAM u32 off_tisk_lm;
+
+#if USE_BINDKEY
+#include "aes_ccm.h"
+
+/* Encrypted mijia beacon structs */
+typedef struct __attribute__((packed)) _mi_beacon_nonce_t{
+    uint8_t  mac[6];
+	uint16_t pid;
+	union {
+		struct {
+			uint8_t  cnt;
+			uint8_t  ext_cnt[3];
+		};
+		uint32_t cnt32;
+    };
+} mi_beacon_nonce_t, * pmi_beacon_nonce_t;
+
+/* Encrypted pvvx beacon structs */
+typedef struct __attribute__((packed)) _adv_cust_head_t {
+	uint8_t		size;		//@0 = 11
+	uint8_t		uid;		//@1 = 0x16, 16-bit UUID https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
+	uint16_t	UUID;		//@2..3 = GATT Service 0x181A Environmental Sensing (little-endian) (or 0x181C 'User Data'?)
+	uint8_t		counter;	//@4 0..0xff Measurement count, Serial number, used for de-duplication, different event or attribute reporting requires different Frame Counter
+} adv_cust_head_t, * padv_cust_head_t;
+
+typedef struct __attribute__((packed)) _adv_cust_data_t {
+	int16_t		temp;		//@0
+	uint16_t	humi;		//@2
+	uint8_t		bat;		//@4
+	trigger_flg_t	flags;	//@5
+} adv_pvvx_data_t, * padv_pvvx_data_t;
+
+typedef struct __attribute__((packed)) _adv_pvvx_enc_t {
+	adv_cust_head_t head;	//@0
+	adv_pvvx_data_t data;   //@5
+	uint8_t		mic[4];		//@11
+} adv_pvvx_enc_t, * padv_pvvx_enc_t;
+
+/* Encrypted atc beacon structs
+ * https://github.com/pvvx/ATC_MiThermometer/issues/94#issuecomment-842846036 */
+typedef struct __attribute__((packed)) _adv_atc_data_t {
+	uint8_t		temp;		//@0
+	uint8_t		humi;		//@1
+	uint8_t		bat;		//@2
+} adv_atc_data_t, * padv_atc_data_t;
+
+typedef struct __attribute__((packed)) _adv_atc_enc_t {
+	adv_cust_head_t head;	//@0
+	adv_atc_data_t data;	//@5
+	uint8_t		mic[4];		//@8..11
+} adv_atc_enc_t, * padv_atc_enc_t;
+
+/* Encrypted atc/custom nonce */
+typedef struct __attribute__((packed)) _enc_beacon_nonce_t{
+    uint8_t  MAC[6];
+    adv_cust_head_t head;
+} enc_beacon_nonce_t;
+
+const uint8_t ccm_aad = 0x11;
+uint8_t bindkey1[16]; // for MAC1
+uint8_t bindkey2[16]; // for MAC2
+#endif
 
 _attribute_ram_code_
 __attribute__((optimize("-Os")))
@@ -175,24 +309,24 @@ void set_th_out(void) {
 _attribute_ram_code_
 __attribute__((optimize("-Os")))
 void set_lm_out(int motion_event) {
-	if(dev_cfg.light_hysteresis) {
+	if(dev_cfg.illuminance_hysteresis) {
 		if(wrk.flg.light_event) { // lm_event on
-			if(dev_cfg.light_hysteresis < 0) {
-				if(wrk.light > dev_cfg.light_threshold - dev_cfg.light_hysteresis) {
+			if(dev_cfg.illuminance_hysteresis < 0) {
+				if(wrk.illuminance > dev_cfg.illuminance_threshold - dev_cfg.illuminance_hysteresis) {
 					wrk.flg.light_event = false;
 				}
 			} else {
-				if(wrk.light < dev_cfg.light_threshold - dev_cfg.light_hysteresis) {
+				if(wrk.illuminance < dev_cfg.illuminance_threshold - dev_cfg.illuminance_hysteresis) {
 					wrk.flg.light_event = false;
 				}
 			}
 		} else { // lm_event off
-			if(dev_cfg.light_hysteresis < 0) {
-				if(wrk.light < dev_cfg.light_threshold + dev_cfg.light_hysteresis) {
+			if(dev_cfg.illuminance_hysteresis < 0) {
+				if(wrk.illuminance < dev_cfg.illuminance_threshold + dev_cfg.illuminance_hysteresis) {
 					wrk.flg.light_event = true;
 				}
 			} else {
-				if(wrk.light > dev_cfg.light_threshold + dev_cfg.light_hysteresis) {
+				if(wrk.illuminance > dev_cfg.illuminance_threshold + dev_cfg.illuminance_hysteresis) {
 					wrk.flg.light_event = true;
 				}
 			}
@@ -208,7 +342,7 @@ void set_lm_out(int motion_event) {
 		if(motion_event && dev_cfg.motion_timer && wrk.motion_level) { // обнаружено движение и включен опрос движения
 			// #TODO wrk.motion == 0 -> не стартовать включение?
 			if(wrk.flg.light_event // темно?
-				|| dev_cfg.light_hysteresis == 0) {  // или не задано слежение за освещением?
+				|| dev_cfg.illuminance_hysteresis == 0) {  // или не задано слежение за освещением?
 					wrk.flg.lm_output = true;	// включить LM
 					wrk.motion_timer = dev_cfg.motion_timer; // установить таймер
 			} else
@@ -229,9 +363,18 @@ void filter_xiaomi_ad(padv_xiaomi_t p) {
 	padv_struct_xiaomi_t ps = (padv_struct_xiaomi_t) &p->cap;
 	int len = p->size;
 	if(len > sizeof(adv_xiaomi_t)) {
-		if(((memcmp(dev1_MAC, p->MAC, 6) == 0)||(memcmp(dev2_MAC, p->MAC, 6) == 0))
-				&&((p->ctrID & 0x88) == 0) // No Mesh, No Data encrypted
-				&&((p->ctrID & 0x50) == 0x50) // MAC and Data  presents
+#if USE_BINDKEY
+		uint8_t * pbkey = NULL;
+		if(memcmp(dev1_MAC, p->MAC, sizeof(dev1_MAC)) == 0)
+			pbkey = bindkey1;
+		else if(memcmp(dev2_MAC, p->MAC, sizeof(dev2_MAC)) == 0)
+			pbkey = bindkey2;
+		if((pbkey != NULL)
+				&&((p->ctrID & (0x50 | 0x80)) == 0x50) // No Mesh, MAC and Data presents
+#else
+		if(((memcmp(dev1_MAC, p->MAC, sizeof(dev1_MAC)) == 0)||(memcmp(dev2_MAC, p->MAC, sizeof(dev2_MAC)) == 0))
+					&&((p->ctrID & (0x88 | 0x50) == 0x50) // No Mesh, MAC and Data presents, No Data encrypted
+#endif
 		) {
 			len -= sizeof(adv_xiaomi_t) - 4;
 			if(p->ctrID & 0x20) { // includes Capability
@@ -242,23 +385,52 @@ void filter_xiaomi_ad(padv_xiaomi_t p) {
 					len -= 2;
 				}
 			}
+#if USE_BINDKEY
+			if((p->ctrID & 0x08) && len > 3+3+4) { // Data encrypted, len > size (min_data[3], ext_cnt[3], mic[4])
+				mi_beacon_nonce_t beacon_nonce;
+				memcpy(&beacon_nonce.mac, p->MAC, sizeof(beacon_nonce.mac));
+				len -= 3+4; // - size (ext_cnt[3], mic[4])
+				uint8_t * pb = (uint8_t *)ps; // = &crypt_data[len] .. ext_cnt[3] .. mic[4]
+				beacon_nonce.pid = p->devID;
+				beacon_nonce.cnt = p->counter;
+				beacon_nonce.ext_cnt[0] = pb[len];
+				beacon_nonce.ext_cnt[1] = pb[len+1];
+				beacon_nonce.ext_cnt[2] = pb[len+2];
+				// uint8_t decrypt_data[16];
+				if(aes_ccm_auth_decrypt((const unsigned char *)pbkey,
+						(uint8_t*)&beacon_nonce, sizeof(beacon_nonce),
+						&ccm_aad, sizeof(ccm_aad),
+						pb, len, // crypt_data
+						pb, // decrypt data
+						(uint8_t *)&pb[len+3], 4)) { // &mic: &crypt_data[len + size (ext_cnt[3])]
+					return;
+				}
+				//ps = (padv_struct_xiaomi_t)&decrypt_data;
+			}
+#endif
 			while((ps->size + 3) <= len) {
-				// ..70205B04BE6E4883012EE709061002CC01
-				if(ps->id == 0x1004) { // Temp
+				if((ps->id == MI_DATA_EV_Motion)&&(ps->size >= 1)) { // Motion
+					set_lm_out(ps->data_ub[0]);
+				} else if((ps->id == MI_DATA_EV_MovingWithLight)&&(ps->size >= 3)) { // Moving With Light
+					wrk.illuminance = ps->data_us[0];
+					set_lm_out(1);
+				} else if((ps->id == MI_DATA_ID_Temperature)&&(ps->size >= 2)) { // Temperature
 					wrk.temp = ps->data_is[0]*10; // in 0.1 C
 					set_th_out();
-				} else if(ps->id == 0x1006) { // Humi
+				} else if((ps->id == MI_DATA_ID_Humidity)&&(ps->size >= 2)) { // Humidity
 					wrk.humi = ps->data_is[0]*10;  // in 0.1 %
 					set_th_out();
-				} else if(ps->id == 0x1007) { // light
-					wrk.light = ps->data_is[0];  // in ?
+				} else if((ps->id == MI_DATA_ID_LightIlluminance)&&(ps->size >= 3)) { // Light Illuminance
+					wrk.illuminance = ps->data_us[0];  // in ?
 					set_lm_out(0);
-//				} else if(ps->id_size == 0x100a) { // Batt %
-//					exdev_batt = ps->data_us[0];  // in %
-				} else if(ps->id == 0x100d) { // Temp + Humi
+				} else if((ps->id == MI_DATA_ID_TempAndHumidity)&&(ps->size >= 4)) { // Temp + Humi
 					wrk.temp = ps->data_is[0]*10; // in 0.1 C
 					wrk.humi = ps->data_is[1]*10; // in 0.1 %
 					set_th_out();
+				} else if((ps->id == MI_DATA_ID_NoOneMoves)&&(ps->size >= 1)) { // No one moves over time
+					set_lm_out(ps->data_ub[0] == 0);
+				} else if((ps->id == MI_DATA_ID_LightIntensity)&&(ps->size >= 1)) { // Light on/off, Light Intensity
+					wrk.light_on = ps->data_ub[0];
 				}
 				len -= ps->size + 3;
 				ps = (padv_struct_xiaomi_t)((uint32_t)ps + ps->size + 3);
@@ -288,13 +460,13 @@ void filter_qingping_ad(padv_qingping_t p) {
 //				} else if(ps->id_size == 0x010f) { // Count
 				} else if(ps->id_size == 0x0408) { // Motion + Light
 					wrk.motion_level = ps->data_ub[0];
-					wrk.light = ps->data_uw >> 8;
+					wrk.illuminance = ps->data_uw >> 8;
 					set_lm_out(1);
 				} else if(ps->id_size == 0x0409) { // Light
-					wrk.light = ps->data_uw & 0x00ffffff;
+					wrk.illuminance = ps->data_uw & 0x00ffffff;
 					set_lm_out(0);
 				} else if(ps->id_size == 0x0111) { // Light on/off
-					wrk.brightness_jump = ps->data_ub[0];
+					wrk.light_on = ps->data_ub[0];
 				}
 				len -= ps->size + 2;
 				ps = (padv_struct_qingping_t)((uint32_t)ps + ps->size + 2);
@@ -305,9 +477,13 @@ void filter_qingping_ad(padv_qingping_t p) {
 
 _attribute_ram_code_
 __attribute__((optimize("-Os")))
+#if USE_BINDKEY
+void filter_custom_ad(adv_custom_t *p, uint8_t *mac) {
+#else
 void filter_custom_ad(adv_custom_t *p) {
+#endif
 	if((p->size == sizeof(adv_custom_t) - 1)
-	 && ((memcmp(dev1_MAC, p->MAC, 6) == 0)||(memcmp(dev2_MAC, p->MAC, 6) == 0))) {
+	 && ((memcmp(dev1_MAC, p->MAC, sizeof(dev1_MAC)) == 0)||(memcmp(dev2_MAC, p->MAC, sizeof(dev2_MAC)) == 0))) {
 		wrk.temp = p->temperature;
 		wrk.humi = p->humidity;
 		set_th_out();
@@ -317,6 +493,40 @@ void filter_custom_ad(adv_custom_t *p) {
 		wrk.flg.rds_output = p->flags.rds_input;
 		gpio_write(GPIO_OUT_RDS, p->flags.rds_input);
 	}
+#if USE_BINDKEY
+	else if(p->size == sizeof(adv_pvvx_enc_t) - 1) {
+		uint8_t * pbkey = NULL;
+		if(memcmp(dev1_MAC, mac, sizeof(dev1_MAC)) == 0)
+			pbkey = bindkey1;
+		else if(memcmp(dev2_MAC, mac, sizeof(dev2_MAC)) == 0)
+			pbkey = bindkey2;
+		if(pbkey != NULL) {
+				enc_beacon_nonce_t beacon_nonce;
+				// unsigned int len = p->size - 4 - (sizeof(adv_cust_head_t)-1); // - mic[4] - head
+				padv_pvvx_enc_t pp = (padv_pvvx_enc_t) p;
+				memcpy(&beacon_nonce.MAC, mac, sizeof(beacon_nonce.MAC));
+				beacon_nonce.head = pp->head; // memcpy(&beacon_nonce.head, pp->head, sizeof(adv_cust_head_t));
+				// uint8_t decrypt_data[16];
+				if(aes_ccm_auth_decrypt((const unsigned char *)pbkey,
+						(uint8_t*)&beacon_nonce, sizeof(beacon_nonce),
+						&ccm_aad, sizeof(ccm_aad),
+						(uint8_t *)&pp->data, sizeof(adv_pvvx_data_t), // len crypt_data
+						(uint8_t *)&pp->data, // decrypt data
+						(uint8_t *)&pp->mic, 4)) { // &mic: &crypt_data[len + size (ext_cnt[3])]
+					return;
+				}
+				//ps = (padv_struct_xiaomi_t)&decrypt_data;
+				wrk.temp = pp->data.temp;
+				wrk.humi = pp->data.humi;
+				set_th_out();
+				//new_trg = pp->data.flags.trg_output;
+				//new_rds = pp->data.flags.rds_input;
+				//gpio_write(GPIO_OUT_TH, p->flags.trg_output);
+				wrk.flg.rds_output = pp->data.flags.rds_input;
+				gpio_write(GPIO_OUT_RDS, p->flags.rds_input);
+		}
+	}
+#endif
 }
 
 //////////////////////////////////////////////////////////
@@ -355,7 +565,11 @@ int scanning_event_callback(u32 h, u8 *p, int n) {
 								}
 #endif
 								if((pd->uuid16) == 0x181A) { // GATT Service 0x181A Environmental Sensing, ATC custom FW
+#if USE_BINDKEY
+									filter_custom_ad((adv_custom_t *)pd, pa->mac);
+#else
 									filter_custom_ad((adv_custom_t *)pd);
+#endif
 								} else if((pd->uuid16) == 0xfe95) { // GATT Service: Xiaomi Inc.
 									filter_xiaomi_ad((adv_xiaomi_t *)pd);
 								} else if((pd->uuid16) == 0xfdcd) { // GATT Service: Qingping Technology (Beijing) Co., Ltd.
@@ -378,7 +592,11 @@ int scanning_event_callback(u32 h, u8 *p, int n) {
 // scan task
 //////////////////////////////////////////////////////////
 RAM uint32_t tisk_scan_task;
-
+#if USE_BINDKEY
+#define	OUT_OFF_TIMEOUT	(15*60) // 15 minutes
+#else
+#define	OUT_OFF_TIMEOUT	60		// 1 minute
+#endif
 _attribute_ram_code_
 __attribute__((optimize("-Os")))
 void scan_task(void) {
@@ -387,15 +605,14 @@ void scan_task(void) {
 		tisk_scan_task = utc_time_sec;
 		if(wrk.motion_timer)
 			wrk.motion_timer--;
-
-		if (utc_time_sec - off_tisk_th >= 60) {
+		if (utc_time_sec - off_tisk_th >= OUT_OFF_TIMEOUT) {
 			gpio_write(GPIO_OUT_TH, 0);
 			gpio_write(GPIO_OUT_RDS, 0);
 			wrk.flg.rds_output = 0;
 			wrk.flg.trg_output = 0;
 			off_tisk_th = utc_time_sec;
 		}
-		if (utc_time_sec - off_tisk_lm >= 60) {
+		if (utc_time_sec - off_tisk_lm >= OUT_OFF_TIMEOUT) {
 			gpio_write(GPIO_OUT_LM, 0);
 			wrk.flg.lm_output = 0;
 			off_tisk_lm = utc_time_sec;

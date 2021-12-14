@@ -8,6 +8,7 @@
 #include "tl_common.h"
 #include "ble.h"
 #include "cmd_parser.h"
+#include "scaning.h"
 #include "flash_eep.h"
 
 #if SPP_SERVICE_ENABLE
@@ -29,7 +30,7 @@ __attribute__((optimize("-Os"))) int onSppReceiveData(void * p) {
 			if(len)
 				memcpy(&utc_time_sec, &req->dat[1], len);
 			memcpy(&sppDataBuffer[1], &utc_time_sec, sizeof(utc_time_sec));
-			olen = sizeof(utc_time_sec) + 1;
+			olen = sizeof(utc_time_sec);
 #if USE_TIME_ADJUST
 		} else if (cmd == CMD_ID_TADJUST) { // Get/set adjust time clock delta (in 1/16 us for 1 sec)
 			if(len > 2) {
@@ -38,7 +39,23 @@ __attribute__((optimize("-Os"))) int onSppReceiveData(void * p) {
 				flash_write_cfg(&utc_time_tick_step, EEP_ID_TIM, sizeof(utc_time_tick_step));
 			}
 			memcpy(&sppDataBuffer[1], &utc_time_tick_step, sizeof(utc_time_tick_step));
-			olen = sizeof(utc_time_tick_step) + 1;
+			olen = sizeof(utc_time_tick_step);
+#endif
+#if USE_BINDKEY
+		} else if ((cmd == CMD_ID_BKEY1)||(cmd == CMD_ID_BKEY2)) { // Get/set beacon bindkey1
+			uint8_t * pk = bindkey1;
+			if(cmd&1)
+				pk = bindkey2;
+			if(len == 16) {
+				memcpy(pk, &req->dat[1], 16);
+				flash_write_cfg(pk, EEP_ID_KEY1+(cmd&1), 16);
+			}
+			if(flash_read_cfg(pk, EEP_ID_KEY1+(cmd&1), 16) == 16) {
+				memcpy(&sppDataBuffer[1], pk, 16);
+				olen = 16;
+			} else { // No bindkey1 in EEP!
+				sppDataBuffer[1] = 0xff;
+			}
 #endif
 		} else if (cmd == CMD_ID_MAC1) { // Get/set MAC1
 			if(len == sizeof(dev1_MAC)) {

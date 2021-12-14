@@ -13,8 +13,8 @@ typedef struct __attribute__((packed)) _dev_cfg_t {
 	int16_t		temp_hysteresis; // Set temp hysteresis, -327.67..327.67 °
 	int16_t		humi_threshold; // x0.01%, Set humi threshold
 	int16_t		humi_hysteresis; // Set humi hysteresis, -327.67..327.67 %
-	int16_t		light_threshold;
-	int16_t		light_hysteresis;
+	int16_t		illuminance_threshold;
+	int16_t		illuminance_hysteresis;
 	uint16_t	motion_timer;
 	struct {
 		uint8_t 	reserved:	1;
@@ -32,10 +32,10 @@ extern uint8_t	dev2_MAC[6]; // [0] - lo, .. [6] - hi digits
 typedef struct __attribute__((packed)) _wrk_data_t {
 	int16_t			temp; // x0.01°
 	int16_t			humi; // x0.01%
-	uint16_t		light;
+	uint16_t		illuminance; // lx ?
 	uint16_t		motion_timer; // in sec
 	uint8_t			motion_level; // close (=1) or distant (=0) movement (level low/hi)
-	uint8_t			brightness_jump; // brightness jump up = 1, jump low = 0.
+	uint8_t			light_on; 	// brightness jump up = 1, jump low = 0.
 	struct {
 		uint8_t 	rds_output	:	1; // Trigger Reed Switch
 		uint8_t 	trg_output	:	1; // Trigger temp/humi output value
@@ -57,6 +57,11 @@ extern uint32_t utc_time_sec;	// clock in sec (= 0 1970-01-01 00:00:00)
 #if USE_TIME_ADJUST
 #define EEP_ID_TIM (0x0ADA) // EEP ID time adjust
 extern uint32_t utc_time_tick_step;
+#endif
+
+#if USE_BINDKEY
+#define EEP_ID_KEY1 (0xBEAC) // EEP ID bkey
+#define EEP_ID_KEY2 (0xBEAD) // EEP ID bkey
 #endif
 
 #if BLE_SECURITY_ENABLE
