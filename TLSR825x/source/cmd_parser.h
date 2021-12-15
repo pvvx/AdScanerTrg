@@ -10,10 +10,8 @@
 
 enum {
 	CMD_ID_INFO     = 0x00, // Get Info
-#if USE_BINDKEY
 	CMD_ID_BKEY1 	= 0x18, // Get/set beacon bindkey1 in EEP (for MAC1)
 	CMD_ID_BKEY2	= 0x19, // Get/set beacon bindkey2 in EEP (for MAC2)
-#endif
 	CMD_ID_UTC_TIME = 0x23, // Get/set utc time
 	CMD_ID_TADJUST  = 0x24, // Get/set adjust time clock delta (in 1/16 us for 1 sec)
 	CMD_ID_MAC1     = 0x40, // Get/set MAC1

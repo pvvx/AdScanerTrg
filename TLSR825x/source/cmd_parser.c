@@ -41,7 +41,6 @@ __attribute__((optimize("-Os"))) int onSppReceiveData(void * p) {
 			memcpy(&sppDataBuffer[1], &utc_time_tick_step, sizeof(utc_time_tick_step));
 			olen = sizeof(utc_time_tick_step);
 #endif
-#if USE_BINDKEY
 		} else if ((cmd == CMD_ID_BKEY1)||(cmd == CMD_ID_BKEY2)) { // Get/set beacon bindkey1
 			uint8_t * pk = bindkey1;
 			if(cmd&1)
@@ -56,7 +55,6 @@ __attribute__((optimize("-Os"))) int onSppReceiveData(void * p) {
 			} else { // No bindkey1 in EEP!
 				sppDataBuffer[1] = 0xff;
 			}
-#endif
 		} else if (cmd == CMD_ID_MAC1) { // Get/set MAC1
 			if(len == sizeof(dev1_MAC)) {
 				memcpy(dev1_MAC, &req->dat[1], sizeof(dev1_MAC));

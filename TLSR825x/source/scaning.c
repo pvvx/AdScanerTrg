@@ -110,18 +110,18 @@ typedef struct __attribute__((packed)) _adv_xiaomi_t {
 #if 0
 	union { // Frame Control
 		struct __attribute__((packed)) {
-			uint16_t Factory: 		1; // reserved text
-			uint16_t Connected: 	1; // reserved text
-			uint16_t Central: 		1; // Keep
-			uint16_t isEncrypted: 	1; // 0: The package is not encrypted; 1: The package is encrypted
-			uint16_t MACInclude: 	1; // 0: Does not include the MAC address; 1: includes a fixed MAC address (the MAC address is included for iOS to recognize this device and connect)
-			uint16_t CapabilityInclude: 	1; // 0: does not include Capability; 1: includes Capability. Before the device is bound, this bit is forced to 1
-			uint16_t ObjectInclude:	1; // 0: does not contain Object; 1: contains Object
-			uint16_t Mesh: 			1; // 0: does not include Mesh; 1: includes Mesh. For standard BLE access products and high security level access, this item is mandatory to 0. This item is mandatory for Mesh access to 1.
-			uint16_t registered:	1; // 0: The device is not bound; 1: The device is registered and bound.
-			uint16_t solicited:		1; // 0: No operation; 1: Request APP to register and bind. It is only valid when the user confirms the pairing by selecting the device on the developer platform, otherwise set to 0. The original name of this item was bindingCfm, and it was renamed to solicited "actively request, solicit" APP for registration and binding
-			uint16_t AuthMode:		2; // 0: old version certification; 1: safety certification; 2: standard certification; 3: reserved
-			uint16_t version:		4; // Version number (currently v5)
+			uint16_t Factory: 		1; //0001 reserved text
+			uint16_t Connected: 	1; //0002 reserved text
+			uint16_t Central: 		1; //0004 Keep
+			uint16_t isEncrypted: 	1; //0008 0: The package is not encrypted; 1: The package is encrypted
+			uint16_t MACInclude: 	1; //0010 0: Does not include the MAC address; 1: includes a fixed MAC address (the MAC address is included for iOS to recognize this device and connect)
+			uint16_t CapabilityInclude: 	1;  //0020 0: does not include Capability; 1: includes Capability. Before the device is bound, this bit is forced to 1
+			uint16_t ObjectInclude:	1; //0040 0: does not contain Object; 1: contains Object
+			uint16_t Mesh: 			1; //0080 0: does not include Mesh; 1: includes Mesh. For standard BLE access products and high security level access, this item is mandatory to 0. This item is mandatory for Mesh access to 1.
+			uint16_t registered:	1; //0100 0: The device is not bound; 1: The device is registered and bound.
+			uint16_t solicited:		1; //0200 0: No operation; 1: Request APP to register and bind. It is only valid when the user confirms the pairing by selecting the device on the developer platform, otherwise set to 0. The original name of this item was bindingCfm, and it was renamed to solicited "actively request, solicit" APP for registration and binding
+			uint16_t AuthMode:		2; //0c00 0: old version certification; 1: safety certification; 2: standard certification; 3: reserved
+			uint16_t version:		4; //f000 Version number (currently v5)
 		} b; // bits
 		uint16_t	word;	// Frame Control
 	} ctrID; // Frame Control
@@ -184,7 +184,6 @@ typedef struct __attribute__((packed)) _adv_struct_qingping_t {
 RAM u32 off_tisk_th;
 RAM u32 off_tisk_lm;
 
-#if USE_BINDKEY
 #include "aes_ccm.h"
 
 /* Encrypted mijia beacon structs */
@@ -244,7 +243,6 @@ typedef struct __attribute__((packed)) _enc_beacon_nonce_t{
 const uint8_t ccm_aad = 0x11;
 uint8_t bindkey1[16]; // for MAC1
 uint8_t bindkey2[16]; // for MAC2
-#endif
 
 _attribute_ram_code_
 __attribute__((optimize("-Os")))
@@ -308,7 +306,7 @@ void set_th_out(void) {
 
 _attribute_ram_code_
 __attribute__((optimize("-Os")))
-void set_lm_out(int motion_event) {
+void set_lm_out(uint8_t motion_event) {
 	if(dev_cfg.illuminance_hysteresis) {
 		if(wrk.flg.light_event) { // lm_event on
 			if(dev_cfg.illuminance_hysteresis < 0) {
@@ -334,13 +332,12 @@ void set_lm_out(int motion_event) {
 	} else wrk.flg.light_event = false;
 
 	if(wrk.motion_timer) { // свет включен по событию движения
-		if(motion_event && dev_cfg.motion_timer && wrk.motion_level) { // обнаружено движение и включен опрос движения
+		if(motion_event && dev_cfg.motion_timer) { // обнаружено движение и включен опрос движения
 			wrk.flg.lm_output = true;	// включить LM
 			wrk.motion_timer = dev_cfg.motion_timer; // обновить таймер
 		} // не менять состояние выхода LM
 	} else { // свет ещё не включен по событию движения
-		if(motion_event && dev_cfg.motion_timer && wrk.motion_level) { // обнаружено движение и включен опрос движения
-			// #TODO wrk.motion == 0 -> не стартовать включение?
+		if(motion_event && dev_cfg.motion_timer) { // обнаружено движение и включен опрос движения
 			if(wrk.flg.light_event // темно?
 				|| dev_cfg.illuminance_hysteresis == 0) {  // или не задано слежение за освещением?
 					wrk.flg.lm_output = true;	// включить LM
@@ -359,44 +356,45 @@ void set_lm_out(int motion_event) {
 
 _attribute_ram_code_
 __attribute__((optimize("-Os")))
-void filter_xiaomi_ad(padv_xiaomi_t p) {
-	padv_struct_xiaomi_t ps = (padv_struct_xiaomi_t) &p->cap;
+void filter_xiaomi_ad(padv_xiaomi_t p, uint8_t *mac) {
 	int len = p->size;
-	if(len > sizeof(adv_xiaomi_t)) {
-#if USE_BINDKEY
+	uint8_t * pb;
+	uint8_t * pmac;
+	if(len > sizeof(adv_xiaomi_t)- 6) {
 		uint8_t * pbkey = NULL;
-		if(memcmp(dev1_MAC, p->MAC, sizeof(dev1_MAC)) == 0)
-			pbkey = bindkey1;
-		else if(memcmp(dev2_MAC, p->MAC, sizeof(dev2_MAC)) == 0)
-			pbkey = bindkey2;
-		if((pbkey != NULL)
-				&&((p->ctrID & (0x50 | 0x80)) == 0x50) // No Mesh, MAC and Data presents
-#else
-		if(((memcmp(dev1_MAC, p->MAC, sizeof(dev1_MAC)) == 0)||(memcmp(dev2_MAC, p->MAC, sizeof(dev2_MAC)) == 0))
-					&&((p->ctrID & (0x88 | 0x50) == 0x50) // No Mesh, MAC and Data presents, No Data encrypted
-#endif
-		) {
+		if(p->ctrID & 0x0010) { // MAC presents
 			len -= sizeof(adv_xiaomi_t) - 4;
+			pmac = p->MAC;
+			pb = &p->cap;
+		} else if(len > sizeof(adv_xiaomi_t)) {
+			len -= sizeof(adv_xiaomi_t) - 4 - 6;
+			pmac = mac;
+			pb = p->MAC;
+		} else
+			return;
+		if(memcmp(dev1_MAC, mac, sizeof(dev1_MAC)) == 0)
+			pbkey = bindkey1;
+		else if(memcmp(dev2_MAC, mac, sizeof(dev2_MAC)) == 0)
+			pbkey = bindkey2;
+		else
+			return;
+		if(((p->ctrID & (0x40 | 0x80)) == 0x40)) { // No Mesh, Data presents
 			if(p->ctrID & 0x20) { // includes Capability
-				ps = (padv_struct_xiaomi_t) &p->data[1];
-				len -= 1;
-				if(p->cap & 0x20) {
-					ps = (padv_struct_xiaomi_t) &p->data[3];
+				if (*pb++ & 0x20) {
+					pb += 2;
 					len -= 2;
 				}
+				len --;
 			}
-#if USE_BINDKEY
 			if((p->ctrID & 0x08) && len > 3+3+4) { // Data encrypted, len > size (min_data[3], ext_cnt[3], mic[4])
 				mi_beacon_nonce_t beacon_nonce;
-				memcpy(&beacon_nonce.mac, p->MAC, sizeof(beacon_nonce.mac));
+				memcpy(&beacon_nonce.mac, pmac, sizeof(beacon_nonce.mac));
 				len -= 3+4; // - size (ext_cnt[3], mic[4])
-				uint8_t * pb = (uint8_t *)ps; // = &crypt_data[len] .. ext_cnt[3] .. mic[4]
 				beacon_nonce.pid = p->devID;
 				beacon_nonce.cnt = p->counter;
 				beacon_nonce.ext_cnt[0] = pb[len];
 				beacon_nonce.ext_cnt[1] = pb[len+1];
 				beacon_nonce.ext_cnt[2] = pb[len+2];
-				// uint8_t decrypt_data[16];
 				if(aes_ccm_auth_decrypt((const unsigned char *)pbkey,
 						(uint8_t*)&beacon_nonce, sizeof(beacon_nonce),
 						&ccm_aad, sizeof(ccm_aad),
@@ -405,14 +403,15 @@ void filter_xiaomi_ad(padv_xiaomi_t p) {
 						(uint8_t *)&pb[len+3], 4)) { // &mic: &crypt_data[len + size (ext_cnt[3])]
 					return;
 				}
-				//ps = (padv_struct_xiaomi_t)&decrypt_data;
 			}
-#endif
-			while((ps->size + 3) <= len) {
+			// send_debug(pb, len);
+			padv_struct_xiaomi_t ps = (padv_struct_xiaomi_t)pb;
+			while(ps->size + 3 <= len) {
 				if((ps->id == MI_DATA_EV_Motion)&&(ps->size >= 1)) { // Motion
 					set_lm_out(ps->data_ub[0]);
-				} else if((ps->id == MI_DATA_EV_MovingWithLight)&&(ps->size >= 3)) { // Moving With Light
+				} else if((ps->id == MI_DATA_EV_MovingWithLight)&&(ps->size >= 3)) { // Moving With Light 0f0003 540f00 / 0f0003 620e00
 					wrk.illuminance = ps->data_us[0];
+					wrk.motion_event = 1;
 					set_lm_out(1);
 				} else if((ps->id == MI_DATA_ID_Temperature)&&(ps->size >= 2)) { // Temperature
 					wrk.temp = ps->data_is[0]*10; // in 0.1 C
@@ -420,16 +419,17 @@ void filter_xiaomi_ad(padv_xiaomi_t p) {
 				} else if((ps->id == MI_DATA_ID_Humidity)&&(ps->size >= 2)) { // Humidity
 					wrk.humi = ps->data_is[0]*10;  // in 0.1 %
 					set_th_out();
-				} else if((ps->id == MI_DATA_ID_LightIlluminance)&&(ps->size >= 3)) { // Light Illuminance
+				} else if((ps->id == MI_DATA_ID_LightIlluminance)&&(ps->size >= 3)) { // Light Illuminance 071003 af1500
 					wrk.illuminance = ps->data_us[0];  // in ?
 					set_lm_out(0);
 				} else if((ps->id == MI_DATA_ID_TempAndHumidity)&&(ps->size >= 4)) { // Temp + Humi
 					wrk.temp = ps->data_is[0]*10; // in 0.1 C
 					wrk.humi = ps->data_is[1]*10; // in 0.1 %
 					set_th_out();
-				} else if((ps->id == MI_DATA_ID_NoOneMoves)&&(ps->size >= 1)) { // No one moves over time
-					set_lm_out(ps->data_ub[0] == 0);
-				} else if((ps->id == MI_DATA_ID_LightIntensity)&&(ps->size >= 1)) { // Light on/off, Light Intensity
+				} else if((ps->id == MI_DATA_ID_NoOneMoves)&&(ps->size >= 4)) { // No one moves over time / 171004 3c000000 / 171004 78000000 / 1710042c010000 / 171004 58020000
+					wrk.motion_event = ps->data_uw == 0;
+					set_lm_out(wrk.motion_event);
+				} else if((ps->id == MI_DATA_ID_LightIntensity)&&(ps->size >= 1)) { // Light on/off, Light Intensity 18100101 / 18100100
 					wrk.light_on = ps->data_ub[0];
 				}
 				len -= ps->size + 3;
@@ -441,7 +441,7 @@ void filter_xiaomi_ad(padv_xiaomi_t p) {
 
 _attribute_ram_code_
 __attribute__((optimize("-Os")))
-void filter_qingping_ad(padv_qingping_t p) {
+void filter_qingping_ad(padv_qingping_t p, uint8_t *mac) {
 	padv_struct_qingping_t ps = (padv_struct_qingping_t) &p->data;
 	int len = p->size;
 	// ..0812 005E60342D58 0201 64 0F01 7D 0904 8C120000
@@ -459,9 +459,9 @@ void filter_qingping_ad(padv_qingping_t p) {
 //					extdev_pressure = ps->data_us[0];  // in 0.01
 //				} else if(ps->id_size == 0x010f) { // Count
 				} else if(ps->id_size == 0x0408) { // Motion + Light
-					wrk.motion_level = ps->data_ub[0];
+					wrk.motion_event = ps->data_ub[0];
 					wrk.illuminance = ps->data_uw >> 8;
-					set_lm_out(1);
+					set_lm_out(wrk.motion_event);
 				} else if(ps->id_size == 0x0409) { // Light
 					wrk.illuminance = ps->data_uw & 0x00ffffff;
 					set_lm_out(0);
@@ -477,11 +477,7 @@ void filter_qingping_ad(padv_qingping_t p) {
 
 _attribute_ram_code_
 __attribute__((optimize("-Os")))
-#if USE_BINDKEY
 void filter_custom_ad(adv_custom_t *p, uint8_t *mac) {
-#else
-void filter_custom_ad(adv_custom_t *p) {
-#endif
 	if((p->size == sizeof(adv_custom_t) - 1)
 	 && ((memcmp(dev1_MAC, p->MAC, sizeof(dev1_MAC)) == 0)||(memcmp(dev2_MAC, p->MAC, sizeof(dev2_MAC)) == 0))) {
 		wrk.temp = p->temperature;
@@ -493,7 +489,6 @@ void filter_custom_ad(adv_custom_t *p) {
 		wrk.flg.rds_output = p->flags.rds_input;
 		gpio_write(GPIO_OUT_RDS, p->flags.rds_input);
 	}
-#if USE_BINDKEY
 	else if(p->size == sizeof(adv_pvvx_enc_t) - 1) {
 		uint8_t * pbkey = NULL;
 		if(memcmp(dev1_MAC, mac, sizeof(dev1_MAC)) == 0)
@@ -526,7 +521,6 @@ void filter_custom_ad(adv_custom_t *p) {
 				gpio_write(GPIO_OUT_RDS, p->flags.rds_input);
 		}
 	}
-#endif
 }
 
 //////////////////////////////////////////////////////////
@@ -565,15 +559,11 @@ int scanning_event_callback(u32 h, u8 *p, int n) {
 								}
 #endif
 								if((pd->uuid16) == 0x181A) { // GATT Service 0x181A Environmental Sensing, ATC custom FW
-#if USE_BINDKEY
 									filter_custom_ad((adv_custom_t *)pd, pa->mac);
-#else
-									filter_custom_ad((adv_custom_t *)pd);
-#endif
 								} else if((pd->uuid16) == 0xfe95) { // GATT Service: Xiaomi Inc.
-									filter_xiaomi_ad((adv_xiaomi_t *)pd);
+									filter_xiaomi_ad((adv_xiaomi_t *)pd, pa->mac);
 								} else if((pd->uuid16) == 0xfdcd) { // GATT Service: Qingping Technology (Beijing) Co., Ltd.
-									filter_qingping_ad((adv_qingping_t *)pd);
+									filter_qingping_ad((adv_qingping_t *)pd, pa->mac);
 								}
 							}
 						} else
@@ -592,11 +582,9 @@ int scanning_event_callback(u32 h, u8 *p, int n) {
 // scan task
 //////////////////////////////////////////////////////////
 RAM uint32_t tisk_scan_task;
-#if USE_BINDKEY
+
 #define	OUT_OFF_TIMEOUT	(15*60) // 15 minutes
-#else
-#define	OUT_OFF_TIMEOUT	60		// 1 minute
-#endif
+
 _attribute_ram_code_
 __attribute__((optimize("-Os")))
 void scan_task(void) {

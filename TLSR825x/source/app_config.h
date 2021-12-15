@@ -1,6 +1,6 @@
 #pragma once
 
-#define SW_VERSION 0x20	 // BCD format (0x34 -> '3.4')
+#define SW_VERSION 0x21	 // BCD format (0x34 -> '3.4')
 
 #define DEVICE_INFO_SERVICE_ENABLE 	1 // = 1 enable Device Information Characteristics
 #define BATT_SERVICE_ENABLE			1
@@ -12,7 +12,6 @@
 #define WATCHDOG_INIT_TIMEOUT		250  //ms
 
 #define USE_TIME_ADJUST		1 // = 1 time correction enabled
-#define USE_BINDKEY			1
 
 #define BLE_SECURITY_ENABLE 1
 #define BLE_HOST_SMP_ENABLE BLE_SECURITY_ENABLE

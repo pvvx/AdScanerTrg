@@ -34,7 +34,7 @@ typedef struct __attribute__((packed)) _wrk_data_t {
 	int16_t			humi; // x0.01%
 	uint16_t		illuminance; // lx ?
 	uint16_t		motion_timer; // in sec
-	uint8_t			motion_level; // close (=1) or distant (=0) movement (level low/hi)
+	uint8_t			motion_event; // Motion event
 	uint8_t			light_on; 	// brightness jump up = 1, jump low = 0.
 	struct {
 		uint8_t 	rds_output	:	1; // Trigger Reed Switch
@@ -43,7 +43,6 @@ typedef struct __attribute__((packed)) _wrk_data_t {
 		uint8_t 	temp_event  :	1; // Temperature trigger event
 		uint8_t 	humi_event  :	1; // Humidity trigger event
 		uint8_t 	light_event	:	1; // Light trigger event
-//		uint8_t 	motion_event:	1; // Motion event
 	} flg;
 } wrk_data_t, * pwrk_data_t;
 
@@ -59,10 +58,8 @@ extern uint32_t utc_time_sec;	// clock in sec (= 0 1970-01-01 00:00:00)
 extern uint32_t utc_time_tick_step;
 #endif
 
-#if USE_BINDKEY
 #define EEP_ID_KEY1 (0xBEAC) // EEP ID bkey
 #define EEP_ID_KEY2 (0xBEAD) // EEP ID bkey
-#endif
 
 #if BLE_SECURITY_ENABLE
 #define EEP_ID_PCD (0xC0DE) // EEP ID pincode

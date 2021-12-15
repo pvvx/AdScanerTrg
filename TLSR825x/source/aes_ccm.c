@@ -30,7 +30,7 @@
 //#include "ccm.h"
 #include <stdint.h>
 #include "tl_common.h"
-#if USE_BINDKEY
+
 #include "stack/ble/crypt/aes/aes_att.h"
 
 #define CCM_ENCRYPT 0
@@ -290,6 +290,4 @@ void aes_ccm_test2(void)
     }
     
 }
-#endif
-
-#endif // USE_MIHOME_BEACON
+#endif // SET_AUTOTEST

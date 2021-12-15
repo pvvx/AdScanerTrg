@@ -189,3 +189,5 @@ inline void ble_send_battery(void) {
 	bls_att_pushNotifyData(BATT_LEVEL_INPUT_DP_H, (u8 *) &battery_level, 1);
 }
 #endif
+
+void send_debug(void *soo, int len);

@@ -67,10 +67,8 @@ void user_init_normal(void) {
 		if(flash_read_cfg(&utc_time_tick_step, EEP_ID_TIM, sizeof(utc_time_tick_step)) != sizeof(utc_time_tick_step))
 			utc_time_tick_step = CLOCK_16M_SYS_TIMER_CLK_1S;
 #endif
-#if USE_BINDKEY
 		flash_read_cfg(&bindkey1, EEP_ID_KEY1, sizeof(bindkey1));
 		flash_read_cfg(&bindkey2, EEP_ID_KEY2, sizeof(bindkey2));
-#endif
 #if BLE_SECURITY_ENABLE
 		if(flash_read_cfg(&pincode, EEP_ID_PCD, sizeof(pincode)) != sizeof(pincode))
 			pincode = 0;

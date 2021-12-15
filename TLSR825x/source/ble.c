@@ -282,3 +282,12 @@ void start_adv_scanning(void) {
 	blc_ll_addScanningInAdvState();  //add scan in adv state
 	blc_ll_addScanningInConnSlaveRole();  //add scan in conn slave role
 }
+
+void send_debug(void *psoo, int len) {
+	if (sppDataCCC // Notify on?
+			&& (blc_ll_getCurrentState() & BLS_LINK_STATE_CONN)) { // Connect?
+		sppDataBuffer[0] = 0xff;
+		memcpy(&sppDataBuffer[1], psoo, len);
+		bls_att_pushNotifyData(SPP_Server2Client_DP_H, (u8 *)&sppDataBuffer, len + 1);
+	}
+}
