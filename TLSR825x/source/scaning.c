@@ -605,6 +605,7 @@ void scan_task(void) {
 			wrk.flg.lm_output = 0;
 			off_tisk_lm = utc_time_sec;
 		}
+#if (SPP_SERVICE_ENABLE)
 		if(memcmp(&adv_buf.wrk.data, &wrk, sizeof(wrk))) {
 			set_adv_data();
 			if (sppDataCCC // Notify on?
@@ -614,6 +615,7 @@ void scan_task(void) {
 				bls_att_pushNotifyData(SPP_Server2Client_DP_H, (u8 *)&sppDataBuffer, sizeof(wrk) + 1);
 			}
 		}
+#endif
 	}
 #if (ADV_SERVICE_ENABLE)
 	u8 *p = my_fifo_get(&ad_fifo);

@@ -2,18 +2,28 @@
 
 #define SW_VERSION 0x21	 // BCD format (0x34 -> '3.4')
 
+#define BLE_DEVICE_ENABLE	1
+
+#if (BLE_DEVICE_ENABLE)
 #define DEVICE_INFO_SERVICE_ENABLE 	1 // = 1 enable Device Information Characteristics
 #define BATT_SERVICE_ENABLE			1
 #define SPP_SERVICE_ENABLE			1
 #define ADV_SERVICE_ENABLE			1
 #define OTA_SERVICE_ENABLE			1
+#else
+#define DEVICE_INFO_SERVICE_ENABLE 	0 // = 1 enable Device Information Characteristics
+#define BATT_SERVICE_ENABLE			0
+#define SPP_SERVICE_ENABLE			0
+#define ADV_SERVICE_ENABLE			0
+#define OTA_SERVICE_ENABLE			0
+#endif
 
-#define MODULE_WATCHDOG_ENABLE		0
-#define WATCHDOG_INIT_TIMEOUT		250  //ms
+#define MODULE_WATCHDOG_ENABLE		0	// WDT not use
+#define WATCHDOG_INIT_TIMEOUT		250  // ms
 
 #define USE_TIME_ADJUST		1 // = 1 time correction enabled
 
-#define BLE_SECURITY_ENABLE 1
+#define BLE_SECURITY_ENABLE 0
 #define BLE_HOST_SMP_ENABLE BLE_SECURITY_ENABLE
 
 #ifdef PCB_LYWSD03MMC
@@ -59,6 +69,12 @@
 
 #endif
 
+/* Power 3.3V, RX RF + TX ADV 1 sec, max:
+ * 48MHz 7.3 mA
+ * 24MHz 6.6 mA
+ * 24MHz 6.2 mA
+ * 16MHz 5.8 mA
+ */
 #define CLOCK_SYS_CLOCK_HZ  	24000000 // 16000000, 24000000, 32000000, 48000000
 enum{
 	CLOCK_SYS_CLOCK_1S = CLOCK_SYS_CLOCK_HZ,

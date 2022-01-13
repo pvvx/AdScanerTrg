@@ -43,7 +43,6 @@ RAM uint32_t utc_time_sec_tick;
 uint8_t	dev1_MAC[6]; // [0] - lo, .. [6] - hi digits
 uint8_t	dev2_MAC[6]; // [0] - lo, .. [6] - hi digits
 
-
 //--- check battery
 _attribute_ram_code_ void check_battery(uint16_t bmv) {
 	battery_mv = get_battery_mv();
@@ -51,7 +50,9 @@ _attribute_ram_code_ void check_battery(uint16_t bmv) {
 		cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_TIMER,
 			clock_time() + 120 * CLOCK_16M_SYS_TIMER_CLK_1S); // go deep-sleep 2 minutes
 	}
+#if	(BATT_SERVICE_ENABLE)
 	battery_level = get_battery_level(battery_mv);
+#endif
 }
 //------------------ user_init_normal -------------------
 void user_init_normal(void) {
@@ -94,7 +95,9 @@ _attribute_ram_code_ void user_init_deepRetn(void) {
 	blc_ll_initBasicMCU();
 	rf_set_power_level_index(MY_RF_POWER);
 	blc_ll_recoverDeepRetention();
+#if (OTA_SERVICE_ENABLE)
 	bls_ota_registerStartCmdCb(app_enter_ota_mode);
+#endif
 }
 
 //----------------------- main_loop()
@@ -104,7 +107,9 @@ _attribute_ram_code_ void main_loop(void) {
 		utc_time_sec_tick += utc_time_tick_step;
 		utc_time_sec++; // + 1 sec
 	}
+#if	(OTA_SERVICE_ENABLE)
 	if (!ota_is_working) {
+#endif
 #if	(BATT_SERVICE_ENABLE)
 		if(send_measure) {
 			if (batteryValueInCCC && (blc_ll_getCurrentState() & BLS_LINK_STATE_CONN))
@@ -120,7 +125,9 @@ _attribute_ram_code_ void main_loop(void) {
 			check_battery(MIN_VBAT_MV);
 		}
 		scan_task();
+#if	(OTA_SERVICE_ENABLE)
 	}
+#endif
 	// bls_pm_setSuspendMask (SUSPEND_ADV | DEEPSLEEP_RETENTION_ADV | SUSPEND_CONN | DEEPSLEEP_RETENTION_CONN);
 	// bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
 	bls_pm_setSuspendMask(SUSPEND_DISABLE);

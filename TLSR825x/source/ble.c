@@ -30,6 +30,7 @@ RAM adv_name_t adv_name = {
 		.name = BLE_NAME
 };
 
+#if (BLE_DEVICE_ENABLE)
 RAM adv_buf_t adv_buf = {
 		.flag.size = 2,
 		.flag.type = GAP_ADTYPE_FLAGS,
@@ -46,6 +47,7 @@ RAM adv_buf_t adv_buf = {
 		.wrk.type = GAP_ADTYPE_SERVICE_DATA_UUID_16BIT,
 		.wrk.uuid16 = CHARACTERISTIC_UUID_ADV
 };
+#endif
 
 #if	(OTA_SERVICE_ENABLE)
 void app_enter_ota_mode(void) {
@@ -158,6 +160,7 @@ int app_host_event_callback(u32 h, u8 *para, int n) {
 
 __attribute__((optimize("-Os")))
 void init_ble(void) {
+#if (BLE_DEVICE_ENABLE)
 	////////////////// BLE stack initialization //////////////////////
 #if 1
 	uint8_t mac_random_static[6];
@@ -175,12 +178,10 @@ void init_ble(void) {
 	blc_ll_initConnection_module(); // connection module  must for BLE slave/master
 	blc_ll_initSlaveRole_module(); // slave module: 	 must for BLE slave,
 	blc_ll_initPowerManagement_module(); //pm module:      	 optional
-
 	////// Host Initialization  //////////
 	blc_gap_peripheral_init();
 	my_att_init(); //gatt initialization
 	blc_l2cap_register_handler(blc_l2cap_packet_receive);
-
 	//Smp Initialization may involve flash write/erase(when one sector stores too much information,
 	//   is about to exceed the sector threshold, this sector must be erased, and all useful information
 	//   should re_stored) , so it must be done after battery check
@@ -247,6 +248,7 @@ void init_ble(void) {
 	blc_pm_setDeepsleepRetentionThreshold(50, 30);
 	blc_pm_setDeepsleepRetentionEarlyWakeupTiming(240);
 	blc_pm_setDeepsleepRetentionType(DEEPSLEEP_MODE_RET_SRAM_LOW32K);
+
 #if	(OTA_SERVICE_ENABLE)
 #ifndef NO_CLR_OTA_AREA
 	bls_ota_clearNewFwDataArea();
@@ -256,9 +258,9 @@ void init_ble(void) {
 	blc_l2cap_registerConnUpdateRspCb(app_conn_param_update_response);
 #if (MTU_DATA_SIZE > ATT_MTU_SIZE)
 	blc_att_setRxMtuSize(MTU_DATA_SIZE); 	// If not set RX MTU size, default is: 23 bytes, max 247?
-#endif
+#endif // MTU_DATA_SIZE
 	set_adv_data();
-//	bls_set_advertise_prepare(app_advertise_prepare_handler);
+	// bls_set_advertise_prepare(app_advertise_prepare_handler);
 	ev_adv_timeout(0,0,0);
 /*
 	blc_ll_addAdvertisingInConnSlaveRole();  //adv in conn slave role
@@ -266,6 +268,15 @@ void init_ble(void) {
 										(u8 *)&adv_name, adv_name.size+1, \
 										ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, BLT_ENABLE_ADV_ALL, ADV_FP_NONE);
 */
+#else // not BLE_DEVICE_ENABLE
+	blc_ll_initBasicMCU(); //must
+	blc_ll_initPowerManagement_module(); //pm module:      	 optional
+	///////////////////// Power Management initialization///////////////////
+	bls_pm_setSuspendMask(SUSPEND_DISABLE);
+	blc_pm_setDeepsleepRetentionThreshold(50, 30);
+	blc_pm_setDeepsleepRetentionEarlyWakeupTiming(240);
+	blc_pm_setDeepsleepRetentionType(DEEPSLEEP_MODE_RET_SRAM_LOW32K);
+#endif // BLE_DEVICE_ENABLE
 }
 
 void start_adv_scanning(void) {
@@ -283,6 +294,7 @@ void start_adv_scanning(void) {
 	blc_ll_addScanningInConnSlaveRole();  //add scan in conn slave role
 }
 
+#if (SPP_SERVICE_ENABLE)
 void send_debug(void *psoo, int len) {
 	if (sppDataCCC // Notify on?
 			&& (blc_ll_getCurrentState() & BLS_LINK_STATE_CONN)) { // Connect?
@@ -291,3 +303,4 @@ void send_debug(void *psoo, int len) {
 		bls_att_pushNotifyData(SPP_Server2Client_DP_H, (u8 *)&sppDataBuffer, len + 1);
 	}
 }
+#endif
