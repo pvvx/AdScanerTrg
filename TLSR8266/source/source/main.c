@@ -20,6 +20,7 @@
  *
  *******************************************************************************************************/
 #include "app.h"
+#include "proj/mcu/watchdog_i.h"
 #if	(USE_FLOADER)
 #include "lfloader.h"
 #endif

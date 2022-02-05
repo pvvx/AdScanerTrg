@@ -18,4 +18,4 @@ $(OUT_PATH)/source/main.o
 # Each subdirectory must supply rules for building sources it contributes
 $(OUT_PATH)/source/%.o: $(PROJECT_PATH)/%.c
 	@echo 'Building file: $<'
-	@tc32-elf-gcc $(GCC_FLAGS) $(INCLUDE_PATHS) -c -o"$@" "$<"
+	@$(TC32_PATH)tc32-elf-gcc $(GCC_FLAGS) $(INCLUDE_PATHS) -c -o"$@" "$<"

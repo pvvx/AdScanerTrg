@@ -20,7 +20,7 @@
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objdump.app.debug.1815355732" name="Generate Extended Listing (Source + generated Assembler)" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objdump.app.debug"/>
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.size.app.debug.1666596672" name="Print Size" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.size.app.debug"/>
 							<targetPlatform id="com.telink.tc32eclipse.targetplatform.TC32Win.app.debug.206884614" name="TC32 Cross-Target" superClass="com.telink.tc32eclipse.targetplatform.TC32Win.app.debug"/>
-							<builder arguments="TEL_PATH=E:/Telink/825x/Telink_825X_SDK" buildPath="${workspace_loc:/Termometr/Debug}" command="make" id="com.telink.tc32eclipse.target.builder.TC32Win.app.debug.1624586167" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="GNU Make Builder" parallelBuildOn="true" parallelizationNumber="-1" superClass="com.telink.tc32eclipse.target.builder.TC32Win.app.debug">
+							<builder buildPath="${workspace_loc:/Termometr/Debug}" id="com.telink.tc32eclipse.target.builder.TC32Win.app.debug.1624586167" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="GNU Make Builder" parallelBuildOn="true" parallelizationNumber="-1" superClass="com.telink.tc32eclipse.target.builder.TC32Win.app.debug">
 								<outputEntries>
 									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="out"/>
 									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="ram"/>
@@ -673,10 +673,19 @@
 					</target>
 					<target name="clean" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 						<buildCommand>make</buildCommand>
+						<buildArguments>TEL_PATH=E:/Telink/825x/Telink_825X_SDK  -j</buildArguments>
 						<buildTarget>clean</buildTarget>
 						<stopOnError>true</stopOnError>
 						<useDefaultCommand>true</useDefaultCommand>
 						<runAllBuilders>true</runAllBuilders>
+					</target>
+					<target name="flash" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+						<buildCommand>make</buildCommand>
+						<buildArguments>TEL_PATH=E:/Telink/825x/Telink_825X_SDK  -j</buildArguments>
+						<buildTarget>flash</buildTarget>
+						<stopOnError>true</stopOnError>
+						<useDefaultCommand>true</useDefaultCommand>
+						<runAllBuilders>false</runAllBuilders>
 					</target>
 				</buildTargets>
 			</storageModule>

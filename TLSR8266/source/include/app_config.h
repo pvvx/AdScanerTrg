@@ -28,24 +28,26 @@ extern "C" {
 #define UART_BAUD	115200 // 300..
 
 ////////// BLE product  Information  ////////////
-#define DEV_NAME		"ADSCANER" // max name = 16 char!
-#define DEV_NAME_SIZE 	8
-#define DEV_VERSION 	0x1002
+#define DEV_NAME		"BLE_000000"
+#define DEV_NAME_SIZE 	10
+#define SET_DEV_NAME_MAC
+#define DEV_VERSION 	0x1021
 
 ////////// USB product  Information  ////////////
 #define STRING_VENDOR        L"Telink"
-#define STRING_PRODUCT       L"ADSCANER"
+#define STRING_PRODUCT       L"BLE-TRG"
 #define STRING_SERIAL        L"1234567"
 
 #define BLE_MASTER				0 // =0  slave -> set lib: liblt_8266_mod.a, =1 master -> set lib: liblt_8266_master_1_conn.a
 /////////////////// BLE Service ////////////////////////////
+#define DEVICE_INFO_SERVICE_ENABLE 	1 // = 1 enable Device Information Characteristics
 #define BATT_SERVICE_ENABLE		0
 #define SPP_SERVICE_ENABLE		1
 #define ADV_SERVICE_ENABLE		1
 #define OTA_SERVICE_ENABLE		1	// Для работы необходимо записать usbfloader.bin в 0x73000
 
 /////////////////// WatchDog  //////////////////////////////
-#define MODULE_WATCHDOG_ENABLE		0
+#define MODULE_WATCHDOG_ENABLE		1
 #define WATCHDOG_INIT_TIMEOUT		500  //ms
 
 /////////////////// Board  //////////////////////////////
@@ -57,7 +59,12 @@ extern "C" {
 #define	USE_SYS_TICK_PER_US
 #endif
 
+#if BATT_SERVICE_ENABLE
+#error "Not supported in current version!"
+#endif
+
 #if	(BOARD == BOARD_JDY_10)
+#define HW_VERSION 0x01
 #include "board_jdy_10.h"
 // выход, управляемый внешним термометром
 #define GPIO_OUT_TH					GPIO_PC0
@@ -77,6 +84,7 @@ extern "C" {
 #define CRYSTAL_TYPE			XTAL_12M		//  extern 12M crystal
 #elif (BOARD == BOARD_E104_BT05)
 #include "board_e104_bt05.h"
+#define HW_VERSION 0x02
 // выход, управляемый внешним термометром
 #define GPIO_OUT_TH					GPIO_PA1 // PWM1
 //#define PC0_FUNC                	AS_GPIO
@@ -114,7 +122,7 @@ extern "C" {
 #else
 #undef BOARD
 #define BOARD BOARD_JDY_10
-#warning "BOARD = JDY-10!"
+#warning "BOARD = JDY-10?"
 #include "board_jdy_10.h"
 #define CRYSTAL_TYPE			XTAL_12M		//  extern 12M crystal
 #endif

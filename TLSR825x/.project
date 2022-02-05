@@ -27,7 +27,7 @@
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.buildArguments</key>
-					<value>TEL_PATH=E:/Telink/825x/Telink_825X_SDK  -j</value>
+					<value>-j</value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.buildCommand</key>
@@ -67,7 +67,7 @@
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.useDefaultBuildCmd</key>
-					<value>false</value>
+					<value>true</value>
 				</dictionary>
 			</arguments>
 		</buildCommand>
@@ -84,11 +84,4 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 		<nature>com.telink.tc32eclipse.core.TC32nature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>sdk</name>
-			<type>2</type>
-			<locationURI>PARENT-2-PROJECT_LOC/Telink_825X_SDK</locationURI>
-		</link>
-	</linkedResources>
 </projectDescription>

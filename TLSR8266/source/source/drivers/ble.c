@@ -31,14 +31,10 @@ const u8 tbl_advData[] = { // https://www.bluetooth.com/specifications/assigned-
 #endif
 };
 
-const struct {
-	u8 size;
-	u8 id;
-	u8 name[DEV_NAME_SIZE];
-} tbl_scanRsp = {
-	.size = DEV_NAME_SIZE + 1,
-	.id = GAP_ADTYPE_LOCAL_NAME_COMPLETE,
-	.name = {DEV_NAME}
+adv_name_t adv_name = {
+		.size = DEV_NAME_SIZE + 1,
+		.type = GAP_ADTYPE_LOCAL_NAME_COMPLETE, // Complete local name
+		.name = {DEV_NAME}
 };
 
 gap_periConnectParams_t my_periConnParameters = {DEF_CONN_PARMS};
@@ -84,12 +80,12 @@ const u16 SppDataUUID 			= SERVICE_UUID_SPP+1; // "SPP: Module<->Phone"
 // SPP attribute values
 static const u8 SppS2cCharVal[5] = {
 	CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT_RSP | CHAR_PROP_NOTIFY,
-	U16_LO(SPP_Server2Client_INPUT_DP_H), U16_HI(SPP_Server2Client_INPUT_DP_H),
+	U16_LO(SPP_Server2Client_DP_H), U16_HI(SPP_Server2Client_DP_H),
 	U16_LO(CHARACTERISTIC_UUID_SPP), U16_HI(CHARACTERISTIC_UUID_SPP)
 };
 #endif
 
-u16 SppDataCCC;
+u16 SppNotifyCCC;
 u8 SppDataBuffer[SPP_SERVICE_BUF_LEN];
 
 int __attribute__((weak)) onSppReceiveData(void *par) {
@@ -121,6 +117,12 @@ const u8 my_OtaServiceUUID[16]	= {TELINK_OTA_UUID_SERVICE};
 const u8 my_OtaUUID[16]			= {TELINK_SPP_DATA_OTA};
 const u8 my_OtaName[] = {'O', 'T', 'A'};
 u8	my_OtaData;
+u8 ota_is_working = 0;
+void app_enter_ota_mode(void) {
+	ota_is_working = 1;
+	bls_ota_setTimeout(100 * 1000000); // set OTA timeout  100 S
+	bls_pm_setManualLatency(0);
+}
 
 extern u32 blt_ota_start_tick;
 int pre_otaWrite(void * p) {
@@ -134,6 +136,63 @@ void  __attribute__((weak)) entry_ota_mode(void) {
 }
 #endif // #if (OTA_SERVICE_ENABLE)
 
+#if DEVICE_INFO_SERVICE_ENABLE
+//////////////////////// DEVICE INFO /////////////////////////////////
+//#define CHARACTERISTIC_UUID_SYSTEM_ID			0x2A23 // System ID
+#define CHARACTERISTIC_UUID_MODEL_NUMBER		0x2A24 // Model Number String: LYWSD03MMC
+#define CHARACTERISTIC_UUID_SERIAL_NUMBER		0x2A25 // Serial Number String: F1.0-CFMK-LB-ZCXTJ--
+#define CHARACTERISTIC_UUID_FIRMWARE_REV		0x2A26 // Firmware Revision String: 1.0.0_0109
+#define CHARACTERISTIC_UUID_HARDWARE_REV		0x2A27 // Hardware Revision String: B1.4
+#define CHARACTERISTIC_UUID_SOFTWARE_REV		0x2A28 // Software Revision String: 0x109
+#define CHARACTERISTIC_UUID_MANUFACTURER_NAME	0x2A29 // Manufacturer Name String: miaomiaoce.com
+
+//// device Information  attribute values
+//static const u16 my_UUID_SYSTEM_ID		    = CHARACTERISTIC_UUID_SYSTEM_ID;
+static const u16 my_UUID_MODEL_NUMBER	    = CHARACTERISTIC_UUID_MODEL_NUMBER;
+static const u16 my_UUID_SERIAL_NUMBER	    = CHARACTERISTIC_UUID_SERIAL_NUMBER;
+static const u16 my_UUID_FIRMWARE_REV	    = CHARACTERISTIC_UUID_FIRMWARE_REV;
+static const u16 my_UUID_HARDWARE_REV	    = CHARACTERISTIC_UUID_HARDWARE_REV;
+static const u16 my_UUID_SOFTWARE_REV	    = CHARACTERISTIC_UUID_SOFTWARE_REV;
+static const u16 my_UUID_MANUFACTURER_NAME  = CHARACTERISTIC_UUID_MANUFACTURER_NAME;
+static const u8 my_ModCharVal[5] = {
+	CHAR_PROP_READ,
+	U16_LO(DeviceInformation_HardRev_DP_H), U16_HI(DeviceInformation_HardRev_DP_H),
+	U16_LO(CHARACTERISTIC_UUID_HARDWARE_REV), U16_HI(CHARACTERISTIC_UUID_HARDWARE_REV)
+};
+static const u8 my_SerialCharVal[5] = {
+	CHAR_PROP_READ,
+	U16_LO(DeviceInformation_FirmRev_DP_H), U16_HI(DeviceInformation_FirmRev_DP_H),
+	U16_LO(CHARACTERISTIC_UUID_SERIAL_NUMBER), U16_HI(CHARACTERISTIC_UUID_SERIAL_NUMBER)
+};
+static const u8 my_FirmCharVal[5] = {
+	CHAR_PROP_READ,
+	U16_LO(DeviceInformation_FirmRev_DP_H), U16_HI(DeviceInformation_FirmRev_DP_H),
+	U16_LO(CHARACTERISTIC_UUID_FIRMWARE_REV), U16_HI(CHARACTERISTIC_UUID_FIRMWARE_REV)
+};
+static const u8 my_HardCharVal[5] = {
+	CHAR_PROP_READ,
+	U16_LO(DeviceInformation_HardRev_DP_H), U16_HI(DeviceInformation_HardRev_DP_H),
+	U16_LO(CHARACTERISTIC_UUID_HARDWARE_REV), U16_HI(CHARACTERISTIC_UUID_HARDWARE_REV)
+};
+static const u8 my_SoftCharVal[5] = {
+	CHAR_PROP_READ,
+	U16_LO(DeviceInformation_SoftRev_DP_H), U16_HI(DeviceInformation_SoftRev_DP_H),
+	U16_LO(CHARACTERISTIC_UUID_SOFTWARE_REV), U16_HI(CHARACTERISTIC_UUID_SOFTWARE_REV)
+};
+static const u8 my_ManCharVal[5] = {
+	CHAR_PROP_READ,
+	U16_LO(DeviceInformation_ManName_DP_H), U16_HI(DeviceInformation_ManName_DP_H),
+	U16_LO(CHARACTERISTIC_UUID_MANUFACTURER_NAME), U16_HI(CHARACTERISTIC_UUID_MANUFACTURER_NAME)
+};
+static const u8 my_ModelStr[] = {"BLE Device"};
+static const u8 my_SerialStr[] = {"123456"};
+static const u8 my_FirmStr[] = {"TLSR8266"};
+static const u8 my_HardStr[] = {'V','0'+((HW_VERSION>>4)&0x0f),'.','0'+(HW_VERSION&0x0f)};
+static const u8 my_SoftStr[] = {'V','0'+((DEV_VERSION>>4)&0x0f),'.','0'+(DEV_VERSION&0x0f)};
+static const u8 my_ManStr[] = {"DIY"};
+//------------------
+#endif // USE_DEVICE_INFO_CHR_UUID
+
 #if	(BATT_SERVICE_ENABLE)
 //////////////////////// Battery /////////////////////////////////////////////////
 //// Battery attribute values
@@ -145,7 +204,7 @@ static const u8 my_batCharVal[5] = {
 const u16 my_batServiceUUID		= SERVICE_UUID_BATTERY;
 const u16 my_batCharUUID       	= CHARACTERISTIC_UUID_BATTERY_LEVEL;
 //static
-u16 batteryValueInCCC;
+u16 batteryNotifyCCC;
 u8 my_batVal	= 99;
 
 #endif // #if	(BATT_SERVICE_ENABLE)
@@ -186,8 +245,6 @@ static const u8  serviceChangedProp = CHAR_PROP_INDICATE;
 static const u16 serviceChangeUIID = GATT_UUID_SERVICE_CHANGE;
 u16 serviceChangeVal[2] = {0};
 static u8 serviceChangeCCC[2]={0,0};
-static u8 my_PnPCharacter = CHAR_PROP_READ;
-const u8 my_PnPtrs[] = {0x02, 0x8a, 0x24, 0x66, 0x82, DEV_VERSION&0xff, 0x00};
 
 /////////////////////////////////////////////////////////
 
@@ -197,7 +254,7 @@ const attribute_t my_Attributes[] = {
 	// 0001 - 0007  gap
 	{7,ATT_PERMISSIONS_READ,2,sizeof(my_gapServiceUUID),(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_gapServiceUUID), 0},
 	{0,ATT_PERMISSIONS_READ,2,sizeof(my_devNameCharacter),(u8*)(&my_characterUUID), 		(u8*)(&my_devNameCharacter), 0},
-	{0,ATT_PERMISSIONS_READ,2,sizeof(tbl_scanRsp.name), (u8*)(&my_devNameUUID), (u8*)(tbl_scanRsp.name), 0},
+	{0,ATT_PERMISSIONS_READ,2,sizeof(adv_name.name), (u8*)(&my_devNameUUID), (u8*)(&adv_name.name), 0},
 	{0,ATT_PERMISSIONS_READ,2,sizeof(my_appearanceCharacter),(u8*)(&my_characterUUID), 		(u8*)(&my_appearanceCharacter), 0},
 	{0,ATT_PERMISSIONS_READ,2,sizeof(my_appearance), (u8*)(&my_appearanceUIID), 	(u8*)(&my_appearance), 0},
 	{0,ATT_PERMISSIONS_READ,2,sizeof(my_periConnParamChar),(u8*)(&my_characterUUID), 		(u8*)(&my_periConnParamChar), 0},
@@ -209,17 +266,35 @@ const attribute_t my_Attributes[] = {
 	{0,ATT_PERMISSIONS_READ,2,sizeof(serviceChangeVal), (u8*)(&serviceChangeUIID), 	(u8*)(&serviceChangeVal), 0},
 	{0,ATT_PERMISSIONS_RDWR,2,sizeof(serviceChangeCCC),(u8*)(&clientCharacterCfgUUID), (u8*)(serviceChangeCCC), 0},
 
-	// 000c - 000e  device Information Service
-	{3,ATT_PERMISSIONS_READ,2,sizeof(my_devServiceUUID),(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_devServiceUUID), 0},
-	{0,ATT_PERMISSIONS_READ,2,sizeof(my_PnPCharacter),(u8*)(&my_characterUUID), 		(u8*)(&my_PnPCharacter), 0},
-	{0,ATT_PERMISSIONS_READ,2,sizeof(my_PnPtrs),(u8*)(&my_PnPUUID), (u8*)(my_PnPtrs), 0},
+#if (DEVICE_INFO_SERVICE_ENABLE)
+	///////////////////////////////// Device Information Service ////////////////////////
+	{13,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_devServiceUUID), 0},
+
+		{0,ATT_PERMISSIONS_READ,2,sizeof(my_ModCharVal),(u8*)(&my_characterUUID), (u8*)(my_ModCharVal), 0},
+		{0,ATT_PERMISSIONS_READ,2,sizeof (my_ModelStr),(u8*)(&my_UUID_MODEL_NUMBER), (u8*)(my_ModelStr), 0},
+
+		{0,ATT_PERMISSIONS_READ,2,sizeof(my_SerialCharVal),(u8*)(&my_characterUUID), (u8*)(my_SerialCharVal), 0},
+		{0,ATT_PERMISSIONS_READ,2,sizeof (my_SerialStr),(u8*)(&my_UUID_SERIAL_NUMBER), (u8*)(my_SerialStr), 0},
+
+		{0,ATT_PERMISSIONS_READ,2,sizeof(my_FirmCharVal),(u8*)(&my_characterUUID), (u8*)(my_FirmCharVal), 0},
+		{0,ATT_PERMISSIONS_READ,2,sizeof (my_FirmStr),(u8*)(&my_UUID_FIRMWARE_REV), (u8*)(my_FirmStr), 0},
+
+		{0,ATT_PERMISSIONS_READ,2,sizeof(my_HardCharVal),(u8*)(&my_characterUUID), (u8*)(my_HardCharVal), 0},
+		{0,ATT_PERMISSIONS_READ,2,sizeof (my_HardStr),(u8*)(&my_UUID_HARDWARE_REV), (u8*)(my_HardStr), 0},
+
+		{0,ATT_PERMISSIONS_READ,2,sizeof(my_SoftCharVal),(u8*)(&my_characterUUID), (u8*)(my_SoftCharVal), 0},
+		{0,ATT_PERMISSIONS_READ,2,sizeof (my_SoftStr),(u8*)(&my_UUID_SOFTWARE_REV), (u8*)(my_SoftStr), 0},
+
+		{0,ATT_PERMISSIONS_READ,2,sizeof(my_ManCharVal),(u8*)(&my_characterUUID), (u8*)(my_ManCharVal), 0},
+		{0,ATT_PERMISSIONS_READ,2,sizeof (my_ManStr),(u8*)(&my_UUID_MANUFACTURER_NAME), (u8*)(my_ManStr), 0},
+#endif
 
 #if	(BATT_SERVICE_ENABLE)
 	////////////////////////////////////// Battery Service /////////////////////////////////////////////////////
 	{4,ATT_PERMISSIONS_READ,2,sizeof(my_batServiceUUID),(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_batServiceUUID), 0},
 	{0,ATT_PERMISSIONS_READ,2,sizeof(my_batCharVal),(u8*)(&my_characterUUID), (u8*)(my_batCharVal), 0},				//prop
 	{0,ATT_PERMISSIONS_READ,2,sizeof(my_batVal),(u8*)(&my_batCharUUID), (u8*)(&my_batVal), 0},	//value
-	{0,ATT_PERMISSIONS_RDWR,2,sizeof(batteryValueInCCC),(u8*)(&clientCharacterCfgUUID), (u8*)(&batteryValueInCCC), 0},	//value
+	{0,ATT_PERMISSIONS_RDWR,2,sizeof(batteryNotifyCCC),(u8*)(&clientCharacterCfgUUID), (u8*)(&batteryNotifyCCC), 0},	//value
 #endif
 #if (ADV_SERVICE_ENABLE)
 	////////////////////////////////////// Adv Service /////////////////////////////////////////////////////
@@ -234,7 +309,7 @@ const attribute_t my_Attributes[] = {
 	{5,ATT_PERMISSIONS_READ,2,sizeof(SppServiceUUID),(u8*)(&my_primaryServiceUUID), 	(u8*)(&SppServiceUUID), 0},
 	{0,ATT_PERMISSIONS_READ, 2,sizeof(SppS2cCharVal),(u8*)(&my_characterUUID),	(u8*)(SppS2cCharVal), 0},
 	{0,ATT_PERMISSIONS_RDWR,SPP_UUID_LEN,sizeof(SppDataBuffer),(u8*)(&SppDataUUID), (u8*)&SppDataBuffer, (att_readwrite_callback_t)&onSppReceiveData, (att_readwrite_callback_t)&onSppSendData},
-	{0,ATT_PERMISSIONS_RDWR, 2,sizeof(SppDataCCC),(u8*)(&clientCharacterCfgUUID), 	(u8*)&SppDataCCC, 0},
+	{0,ATT_PERMISSIONS_RDWR, 2,sizeof(SppNotifyCCC),(u8*)(&clientCharacterCfgUUID), 	(u8*)&SppNotifyCCC, 0},
 	{0,ATT_PERMISSIONS_READ, 2,sizeof(SppS2cDescriptor),(u8*)&userdesc_UUID,(u8*)(&SppS2cDescriptor)},
 #endif
 #if (OTA_SERVICE_ENABLE)
@@ -260,6 +335,24 @@ MYFIFO_INIT(blt_rxfifo, 64, 8); 	// 64*8 512 bytes + headers
 MYFIFO_INIT(blt_txfifo, 40, 16);	// 40*16 640 bytes + headers
 
 u8  tbl_mac[6] = {0xe1, 0xe1, 0x0b, 0x38, 0xc1, 0xa4};
+
+#ifdef	SET_DEV_NAME_MAC
+const char* hex_ascii = { "0123456789ABCDEF" };
+void ble_set_default_name(void) {
+	//Set the BLE Name to the last three MACs the first ones are always the same
+	uint8_t *p = adv_name.name;
+	*p++ = 'B';
+	*p++ = 'L';
+	*p++ = 'E';
+	*p++ = '_';
+	*p++ = hex_ascii[tbl_mac[2] >> 4];
+	*p++ = hex_ascii[tbl_mac[2] & 0x0f];
+	*p++ = hex_ascii[tbl_mac[1] >> 4];
+	*p++ = hex_ascii[tbl_mac[1] & 0x0f];
+	*p++ = hex_ascii[tbl_mac[0] >> 4];
+	*p = hex_ascii[tbl_mac[0] & 0x0f];
+}
+#endif
 
 /////////////////////////////////////////////////////////////////////
 void ble_init(void) {
@@ -297,15 +390,18 @@ void ble_init(void) {
 	bls_att_setAttributeTable ((u8 *)my_Attributes);
 
 	bls_ll_setAdvData( (u8 *)tbl_advData, sizeof(tbl_advData) );
-	bls_ll_setScanRspData( (u8 *)&tbl_scanRsp, sizeof(tbl_scanRsp));
+#ifdef	SET_DEV_NAME_MAC
+	ble_set_default_name();
+#endif
+	bls_ll_setScanRspData((uint8_t *) &adv_name, adv_name.size+1);
 
 	blc_l2cap_register_handler(blc_l2cap_packet_receive);  	// l2cap initialization
 	bls_smp_enableParing(SMP_PARING_DISABLE_TRRIGER);
 #if (OTA_SERVICE_ENABLE)
 	// OTA init
 	bls_ota_clearNewFwDataArea(); //must
-	bls_ota_registerStartCmdCb(entry_ota_mode);
-	bls_ota_registerResultIndicateCb(show_ota_result);
+	bls_ota_registerStartCmdCb(app_enter_ota_mode);
+//	bls_ota_registerResultIndicateCb(show_ota_result);
 #endif
 	///////////////////// USER application initialization ///////////////////
 	if(bls_ll_setAdvParam(
@@ -327,7 +423,7 @@ void ble_init(void) {
 	blc_att_registerMtuSizeExchangeCb(&MtuSizeExchanged_callback);
 #endif
 
-#if MTU_DATA_SIZE > 23
+#if MTU_DATA_SIZE > ATT_MTU_SIZE
 	blc_att_setRxMtuSize(MTU_DATA_SIZE); 	// If not set RX MTU size, default is: 23 bytes, max 241
 #endif
 

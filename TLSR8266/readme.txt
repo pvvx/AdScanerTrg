@@ -37,8 +37,6 @@ PE4 - GPIO_RS: output controlled by external reed switch (LYWSD03MMC with Reed S
 PA5 - GPIO_LM: output controlled by an external motion and light sensor (CGPR1 in Qingping Mode)
 
 
-If sensor data is not received within 60 seconds, then GPIO_xx are set to "0".
-
 * Implementation on E104-BT05-TB and ESP01Relay:
 
 ![Implementation on E104-BT05-TB and ESP01Relay](https://raw.githubusercontent.com/pvvx/pvvx.github.io/master/AdScanerTrg/img/AdScanerTrg-E104-BT05.gif)

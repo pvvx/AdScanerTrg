@@ -5,12 +5,14 @@
  *      Author: pvvx
  */
 #include "app.h"
+#include "scaning.h"
 #include "cmd_parser.h"
 #include "flash_eep.h"
 
+
 #if SPP_SERVICE_ENABLE
 
-__attribute__((optimize("-Os"))) void cmd_parser(void * p) {
+__attribute__((optimize("-Os"))) int onSppReceiveData(void * p) {
 	rf_packet_att_data_t *req = (rf_packet_att_data_t*) p;
 	uint32_t len = req->l2cap - 3;
 	if(len) {
@@ -22,6 +24,36 @@ __attribute__((optimize("-Os"))) void cmd_parser(void * p) {
 		if (cmd == CMD_ID_INFO) {
 			memcpy(&SppDataBuffer[1], &wrk, sizeof(wrk));
 			olen = sizeof(wrk);
+		} else if (cmd == CMD_ID_UTC_TIME) { // Get/set utc time
+			if(--len > sizeof(utc_time_sec)) len = sizeof(utc_time_sec);
+			if(len)
+				memcpy(&utc_time_sec, &req->dat[1], len);
+			memcpy(&SppDataBuffer[1], &utc_time_sec, sizeof(utc_time_sec));
+			olen = sizeof(utc_time_sec);
+#if USE_TIME_ADJUST
+		} else if (cmd == CMD_ID_TADJUST) { // Get/set adjust time clock delta (in 1/16 us for 1 sec)
+			if(len > 2) {
+				int16_t delta = req->dat[1] | (req->dat[2] << 8);
+				utc_time_tick_step = CLOCK_16M_SYS_TIMER_CLK_1S + delta;
+				flash_write_cfg(&utc_time_tick_step, EEP_ID_TIM, sizeof(utc_time_tick_step));
+			}
+			memcpy(&SppDataBuffer[1], &utc_time_tick_step, sizeof(utc_time_tick_step));
+			olen = sizeof(utc_time_tick_step);
+#endif
+		} else if ((cmd == CMD_ID_BKEY1)||(cmd == CMD_ID_BKEY2)) { // Get/set beacon bindkey1
+			uint8_t * pk = bindkey1;
+			if(cmd&1)
+				pk = bindkey2;
+			if(len == 16) {
+				memcpy(pk, &req->dat[1], 16);
+				flash_write_cfg(pk, EEP_ID_KEY1+(cmd&1), 16);
+			}
+			if(flash_read_cfg(pk, EEP_ID_KEY1+(cmd&1), 16) == 16) {
+				memcpy(&SppDataBuffer[1], pk, 16);
+				olen = 16;
+			} else { // No bindkey1 in EEP!
+				SppDataBuffer[1] = 0xff;
+			}
 		} else if (cmd == CMD_ID_MAC1) { // Get/set MAC1
 			if(len == sizeof(dev1_MAC)) {
 				memcpy(dev1_MAC, &req->dat[1], sizeof(dev1_MAC));
@@ -43,10 +75,20 @@ __attribute__((optimize("-Os"))) void cmd_parser(void * p) {
 			}
 			memcpy(&SppDataBuffer[1], &dev_cfg, sizeof(dev_cfg));
 			olen = sizeof(dev_cfg);
+		} else if (cmd == CMD_ID_MTU && len > 1) { // Request Mtu Size Exchange
+			if(req->dat[1] > ATT_MTU_SIZE)
+				SppDataBuffer[1] = blc_att_requestMtuSizeExchange(BLS_CONN_HANDLE, req->dat[1]);
+			else
+				SppDataBuffer[1] = 0xff;
+			olen = 2;
+		} else if (cmd == CMD_ID_REBOOT) { // Set Reboot on disconnect
+			ble_connected |= 0x80; // reset device on disconnect
+			olen = 2;
 		}
 		if(olen)
-			bls_att_pushNotifyData(SPP_Server2Client_INPUT_DP_H, SppDataBuffer, olen + 1);
+			bls_att_pushNotifyData(SPP_Server2Client_DP_H, SppDataBuffer, olen + 1);
 	}
+	return 0;
 }
 
 #endif

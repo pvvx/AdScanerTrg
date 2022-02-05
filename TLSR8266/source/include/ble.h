@@ -35,8 +35,8 @@
 #if (SPP_SERVICE_ENABLE)
 #define SERVICE_UUID_SPP 		0xffe0
 #define CHARACTERISTIC_UUID_SPP (SERVICE_UUID_SPP+1)
-#define SPP_SERVICE_BUF_LEN		20 // MTU_DATA_SIZE
-extern	u16 SppDataCCC;
+#define SPP_SERVICE_BUF_LEN		(ATT_MTU_SIZE-3) // = 20
+extern	u16 SppNotifyCCC;
 extern	u8 SppDataBuffer[SPP_SERVICE_BUF_LEN];
 #endif
 
@@ -46,6 +46,17 @@ extern	u8 SppDataBuffer[SPP_SERVICE_BUF_LEN];
 extern u16 advNotifyCCC;
 extern u32 advDataValue;
 #endif
+
+#if (OTA_SERVICE_ENABLE)
+extern u8 ota_is_working;
+#endif
+
+typedef struct __attribute__((packed)) _adv_name_t {
+	uint8_t size;
+	uint8_t type;
+	uint8_t name[DEV_NAME_SIZE];
+}adv_name_t;
+extern adv_name_t adv_name;
 
 typedef struct
 {
@@ -81,11 +92,23 @@ typedef enum
 	GenericAttribute_ServiceChanged_DP_H,   //UUID:	2A05,	VALUE: service change
 	GenericAttribute_ServiceChanged_CCB_H,	//UUID: 2902,	VALUE: serviceChangeCCC
 
+#if (DEVICE_INFO_SERVICE_ENABLE)
 	//// device information ////
 	/**********************************************************************************************/
-	DeviceInformation_PS_H,					//UUID: 2800, 	VALUE: uuid 180A
-	DeviceInformation_pnpID_CD_H,			//UUID: 2803, 	VALUE:  			Prop: Read
-	DeviceInformation_pnpID_DP_H,			//UUID: 2A50,	VALUE: PnPtrs
+	DeviceInformation_PS_H,				//UUID: 2800, 	VALUE: uuid 180A
+	DeviceInformation_ModName_CD_H,		//UUID: 2803, 	VALUE: Prop: Read
+	DeviceInformation_ModName_DP_H,		//UUID: 2A24,	VALUE: Model Number String
+	DeviceInformation_SerialN_CD_H,		//UUID: 2803, 	VALUE: Prop: Read
+	DeviceInformation_SerialN_DP_H,		//UUID: 2A25,	VALUE: Serial Number String
+	DeviceInformation_FirmRev_CD_H,		//UUID: 2803, 	VALUE: Prop: Read
+	DeviceInformation_FirmRev_DP_H,		//UUID: 2A26,	VALUE: Firmware Revision String
+	DeviceInformation_HardRev_CD_H,		//UUID: 2803, 	VALUE: Prop: Read
+	DeviceInformation_HardRev_DP_H,		//UUID: 2A27,	VALUE: Hardware Revision String
+	DeviceInformation_SoftRev_CD_H,		//UUID: 2803, 	VALUE: Prop: Read
+	DeviceInformation_SoftRev_DP_H,		//UUID: 2A28,	VALUE: Software Revision String
+	DeviceInformation_ManName_CD_H,		//UUID: 2803, 	VALUE: Prop: Read
+	DeviceInformation_ManName_DP_H,		//UUID: 2A29,	VALUE: Manufacturer Name String
+#endif
 #if	(BATT_SERVICE_ENABLE)
 	//// battery service ////
 	/**********************************************************************************************/
@@ -104,13 +127,13 @@ typedef enum
 	ADV_DESC_H,								//UUID: 2901, 	VALUE: advDescriptor
 #endif
 #if (SPP_SERVICE_ENABLE)
-	//// TELIK_SPP ////
+	//// SPP Server2Client service ////
 	/**********************************************************************************************/
-	SPP_PS_H, 								//UUID: 2800, 	VALUE: telink
-	SPP_Server2Client_INPUT_CD_H,			//UUID: 2803, 	VALUE:  			Prop: Read | Notify
-	SPP_Server2Client_INPUT_DP_H,			//UUID: SPP_Server2Client uuid,  VALUE: SppDataServer2ClientData
-	SPP_Server2Client_INPUT_CCB_H,			//UUID: 2902 	VALUE: SppDataServer2ClientDataCCC
-	SPP_Server2Client_INPUT_DESC_H,			//UUID: 2901, 	VALUE: SPPS2CDescriptor
+	SPP_PS_H, 							//UUID: 2800, 	VALUE: FFE0
+	SPP_Server2Client_CD_H,				//UUID: 2803, 	VALUE: Prop: Read | write_without_rsp | Notify
+	SPP_Server2Client_DP_H,				//UUID: FFE1,   VALUE: SppDataBuffer
+	SPP_Server2Client_CCB_H,			//UUID: 2902 	VALUE: SppDataCCC
+	SPP_Server2Client_DESC_H,			//UUID: 2901, 	VALUE: my_SppName
 #endif
 #if (OTA_SERVICE_ENABLE)
 	//// Ota ////

@@ -201,7 +201,7 @@ attribute_t my_Attributes[] = {
 	// 0001 - 0007  gap
 	{7,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_gapServiceUUID), 0},
 		{0,ATT_PERMISSIONS_READ,2,sizeof(my_devNameCharVal),(u8*)(&my_characterUUID), (u8*)(my_devNameCharVal), 0},
-		{0,ATT_PERMISSIONS_READ,2,BLE_NAME_SIZE, (u8*)(&my_devNameUUID), (u8*)&adv_name.name, 0},
+		{0,ATT_PERMISSIONS_READ,2,sizeof(adv_name.name), (u8*)(&my_devNameUUID), (u8*)&adv_name.name, 0},
 		{0,ATT_PERMISSIONS_READ,2,sizeof(my_appearanceCharVal),(u8*)(&my_characterUUID), (u8*)(my_appearanceCharVal), 0},
 		{0,ATT_PERMISSIONS_READ,2,sizeof (my_appearance), (u8*)(&my_appearanceUIID), 	(u8*)(&my_appearance), 0},
 		{0,ATT_PERMISSIONS_READ,2,sizeof(my_periConnParamCharVal),(u8*)(&my_characterUUID), (u8*)(my_periConnParamCharVal), 0},
