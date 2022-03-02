@@ -14,7 +14,6 @@ $(OUT_PATH)/source/ble.o \
 $(OUT_PATH)/source/aes_ccm.o \
 $(OUT_PATH)/source/main.o
 
-
 # Each subdirectory must supply rules for building sources it contributes
 $(OUT_PATH)/source/%.o: $(PROJECT_PATH)/%.c
 	@echo 'Building file: $<'
